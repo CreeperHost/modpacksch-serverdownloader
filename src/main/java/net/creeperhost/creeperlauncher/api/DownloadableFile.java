@@ -247,6 +247,8 @@ public class DownloadableFile
         return updated;
     }
 
+    public Boolean getClientOnly() { return clientSide; }
+
     public long getSize()
     {
         return size;

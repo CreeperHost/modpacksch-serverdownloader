@@ -30,9 +30,11 @@ import java.util.concurrent.atomic.AtomicLong;
 public class Main {
     public static AtomicLong overallBytes;
     public static AtomicLong currentBytes;
+    public static Path installPath;
     private static ArrayList<ServerPack> packs = new ArrayList<ServerPack>();
     public static void main(String[] args) {
         boolean search = false;
+        installPath = Paths.get("");
         boolean latest = true;
 	    try
         {
