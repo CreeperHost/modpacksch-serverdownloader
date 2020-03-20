@@ -19,7 +19,7 @@ public class Main {
     public static AtomicLong currentBytes;
 
     public static void main(String[] args) {
-	// write your code here
+        // write your code here
     }
 
     void downloadFiles(File instanceDir, File forgeLibs)
@@ -100,6 +100,11 @@ public class Main {
             }
             throw err;
         }
+    }
+
+    public static String getDefaultThreadLimit(String arg)
+    {
+        return String.valueOf((Runtime.getRuntime().availableProcessors() / 2) - 1);
     }
 
     private List<DownloadableFile> getRequiredDownloads(File file, File forgeLibs) throws MalformedURLException {
