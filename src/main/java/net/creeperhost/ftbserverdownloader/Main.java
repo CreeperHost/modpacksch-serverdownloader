@@ -32,6 +32,7 @@ public class Main {
     public static AtomicLong currentBytes;
     private static ArrayList<ServerPack> packs = new ArrayList<ServerPack>();
     public static void main(String[] args) {
+<<<<<<< HEAD
         boolean search = false;
         boolean latest = true;
 	    try
@@ -90,6 +91,9 @@ public class Main {
             combinedFuture.join();
 
         }
+=======
+        // write your code here
+>>>>>>> master
     }
 
     void downloadFiles(File instanceDir, File forgeLibs)
@@ -170,6 +174,11 @@ public class Main {
             }
             throw err;
         }
+    }
+
+    public static String getDefaultThreadLimit(String arg)
+    {
+        return String.valueOf((Runtime.getRuntime().availableProcessors() / 2) - 1);
     }
 
     private List<DownloadableFile> getRequiredDownloads(File file, File forgeLibs) throws MalformedURLException {
