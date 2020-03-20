@@ -29,7 +29,7 @@ public class ServerVersion {
     {
         HttpClient wclient = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://api.modpacks.ch/public/modpack/"+this.id))
+                .uri(URI.create("https://api.modpacks.ch/public/modpack/"+this.pack+"/"+this.id))
                 .build();
         wclient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
