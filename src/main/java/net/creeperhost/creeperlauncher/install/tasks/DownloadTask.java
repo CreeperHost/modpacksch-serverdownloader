@@ -2,7 +2,6 @@ package net.creeperhost.creeperlauncher.install.tasks;
 
 import net.creeperhost.creeperlauncher.CreeperLogger;
 import net.creeperhost.creeperlauncher.IntegrityCheckException;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.ftbserverdownloader.Main;
 
@@ -17,7 +16,7 @@ public class DownloadTask implements IInstallTask
     private boolean canChecksum = false;
     private boolean checksumComplete;
     private String sha1;
-    static int nThreads = Integer.parseInt(Settings.settings.computeIfAbsent("threadLimit", Settings::getDefaultThreadLimit));
+    static int nThreads = Integer.parseInt(Main.getDefaultThreadLimit(""));
     private static final Executor threadPool = new ThreadPoolExecutor(nThreads, nThreads, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     private int tries = 0;
     private final DownloadableFile file;

@@ -1,6 +1,6 @@
 package net.creeperhost.creeperlauncher;
 
-import net.creeperhost.creeperlauncher.api.handlers.InstallInstanceHandler;
+//import net.creeperhost.creeperlauncher.api.handlers.InstallInstanceHandler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +39,8 @@ public class IntegrityCheckException extends RuntimeException
         this.source = source;
         this.destination = destination;
         //TODO: Remove these once exceptions work properly again
-        InstallInstanceHandler.hasError.set(true);
-        InstallInstanceHandler.lastError.set(detailMessage);
+        //InstallInstanceHandler.hasError.set(true);
+        //InstallInstanceHandler.lastError.set(detailMessage);
         this.printStackTrace();
     }
 

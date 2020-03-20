@@ -2,7 +2,6 @@ package net.creeperhost.creeperlauncher.api;
 
 import net.creeperhost.creeperlauncher.CreeperLogger;
 import net.creeperhost.creeperlauncher.IntegrityCheckException;
-import net.creeperhost.creeperlauncher.Settings;
 import net.creeperhost.creeperlauncher.install.tasks.http.DownloadedFile;
 import net.creeperhost.creeperlauncher.install.tasks.http.IHttpClient;
 import net.creeperhost.creeperlauncher.install.tasks.http.OkHttpClientImpl;
@@ -152,7 +151,7 @@ public class DownloadableFile
         DownloadedFile send = client.doDownload(this.downloadUrl, destination, (downloaded, delta, total, done) ->
         {
             Main.currentBytes.addAndGet(delta);
-        }, digest, Long.parseLong(Settings.settings.putIfAbsent("speedLimit", "0")) * 1000l); // not really async - our client will run async things on same thread. bit of a hack, but async just froze.
+        }, digest, 0); // not really async - our client will run async things on same thread. bit of a hack, but async just froze.
         Path body = send.getDestination();
         sha1 = send.getChecksum();
         File file = body.toFile();
