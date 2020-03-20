@@ -17,7 +17,7 @@ public class ServerPack {
     public String name;
     public String synopsis;
     public String description;
-    private ArrayList<CompletableFuture> futures;
+    private ArrayList<CompletableFuture> futures = new ArrayList<>();
     public ArrayList<ServerVersion> versions = new ArrayList<ServerVersion>();
     ServerPack(long id)
     {
@@ -48,7 +48,7 @@ public class ServerPack {
                         }));
                         this.versions.add(tmp);
                     }
-                });
+                }).join();
         CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(
                 futures.toArray(new CompletableFuture[0])).exceptionally((t) ->
                 {

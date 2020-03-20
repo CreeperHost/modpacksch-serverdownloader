@@ -28,8 +28,8 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Main {
-    public static AtomicLong overallBytes;
-    public static AtomicLong currentBytes;
+    public static AtomicLong overallBytes = new AtomicLong(0);
+    public static AtomicLong currentBytes = new AtomicLong(0);
     public static Path installPath;
     private static ArrayList<ServerPack> packs = new ArrayList<ServerPack>();
     public static void main(String[] args) {
@@ -79,9 +79,10 @@ public class Main {
                             ServerPack tmp = new ServerPack(packId);
                             futures.add(CompletableFuture.runAsync(() -> {
                                tmp.downloadManifest();
+                               Main.packs.add(tmp);
                             }));
                         }
-                    });
+                    }).join();
             CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(
                     futures.toArray(new CompletableFuture[0])).exceptionally((t) ->
                     {
@@ -92,9 +93,13 @@ public class Main {
             combinedFuture.join();
 
         }
+
+	    packs.
+                get(0).versions.
+                get(0).install();
     }
 
-    void downloadFiles(File instanceDir, File forgeLibs)
+/*    void downloadFiles(File instanceDir, File forgeLibs)
     {
         CreeperLogger.INSTANCE.info("Attempting to downloaded required files");
 
@@ -127,6 +132,7 @@ public class Main {
         for (DownloadableFile file : requiredFiles)
         {
             File f = new File(instanceDir + File.separator + file.getPath());
+            System.out.println(file.getPath());
             if (!f.exists()) f.mkdir();
             try
             {
@@ -172,7 +178,7 @@ public class Main {
             }
             throw err;
         }
-    }
+    }*/
 
     public static String getDefaultThreadLimit(String arg)
     {

@@ -18,7 +18,7 @@ public class ServerVersion {
     public long pack;
     public String name;
     public String type;
-    private ArrayList<CompletableFuture> futures;
+    private ArrayList<CompletableFuture> futures = new ArrayList<>();
     private ArrayList<DownloadableFile> files = new ArrayList<DownloadableFile>();
     ServerVersion(long pack, long id)
     {
@@ -59,7 +59,8 @@ public class ServerVersion {
         for(DownloadableFile downloadableFile : files) {
             if (!downloadableFile.getClientOnly()) {
                 try {
-                    downloadableFile.download(Main.installPath, true, false);
+                    downloadableFile.prepare();
+                    downloadableFile.download(Main.installPath.resolve(downloadableFile.getPath()).resolve(downloadableFile.getName()), true, false);
                 } catch (Throwable throwable) {
                     System.out.println("Unable to download: " + throwable.getMessage());
                     throwable.printStackTrace();

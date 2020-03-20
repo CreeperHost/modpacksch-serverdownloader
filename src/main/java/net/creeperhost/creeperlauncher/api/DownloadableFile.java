@@ -38,7 +38,7 @@ public class DownloadableFile
     MessageDigest digest;
     String sha1;
     File destination;
-    private final IHttpClient client = new OkHttpClientImpl();
+    private IHttpClient client;
 
     public DownloadableFile(String version, String path, String url, List<String> acceptedChecksums, long size, boolean clientSide, boolean optional, long id, String name, String type, String updated)
     {
@@ -64,6 +64,8 @@ public class DownloadableFile
 
     public void prepare() throws IOException
     {
+        if (client == null) client = new OkHttpClientImpl();
+        this.downloadUrl = this.url.toString();
         try
         {
             this.url = new URL(this.downloadUrl.replace(" ", "%20"));
