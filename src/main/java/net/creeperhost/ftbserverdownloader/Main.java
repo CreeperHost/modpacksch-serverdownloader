@@ -19,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -43,6 +44,53 @@ public class Main {
         } catch(Exception ignored)
         {
             search = true;
+        }
+	    String argName = null;
+	    HashMap<String, String> Args = new HashMap<String, String>();
+	    for(String arg : args)
+        {
+            if(argName == null)
+            {
+                if(arg.substring(0,2).equals("--")) {
+                    argName = arg.substring(2);
+                }
+            } else {
+                Args.put(argName, arg);
+                argName = null;
+            }
+        }
+	    if(Args.containsKey("help"))
+        {
+            System.out.println("                      _                  _              _     ");
+            System.out.println("                     | |                | |            | |    ");
+            System.out.println("  _ __ ___   ___   __| |_ __   __ _  ___| | _____   ___| |__  ");
+            System.out.println(" | '_ ` _ \ / _ \ / _` | '_ \ / _` |/ __| |/ / __| / __| '_ \ ");
+            System.out.println(" | | | | | | (_) | (_| | |_) | (_| | (__|   <\__ \| (__| | | |");
+            System.out.println(" |_| |_| |_|\___/ \__,_| .__/ \__,_|\___|_|\_\___(_)___|_| |_|");
+            System.out.println("                       | |                                    ");
+            System.out.println("                       |_|                                    ");
+            System.out.println("            modpacks.ch server downloader - v"+verString);
+            System.out.println("");
+            System.out.println("Usage:");
+            System.out.println("./modpacksch - Start an interactive download and install.");
+            System.out.println("./modpacksch <packid> - Download and install the latest Release version of a modpack by id.");
+            System.out.println("./modpacksch <packid> <versionid> - Download and install a specific version of a modpack by id and version id.");
+            System.out.println("");
+            System.out.println("Additional arguments:");
+            System.out.println("--help - Print this help information.");
+            System.out.println("--path - Specify an install path instead of current working directory.");
+            System.out.println("Example: ./modpacksch 47 295 --path /home/ftb/omnia");
+            System.out.println("");
+            System.exit(0);
+        }
+	    if(Args.containsKey("path"))
+        {
+            Path tmpPath = Path.of(Args.get("path"));
+            if(!tmpPath.toFile().exists())
+            {
+                System.out.println("Requested install path '"+tmpPath.toAbsolutePath().toString()+"' does not exist.");
+                System.exit(-5);
+            }
         }
 	    if(!search) {
             if (args.length > 1) {
@@ -177,7 +225,7 @@ public class Main {
                 }
             }
             ch = 0;
-            System.out.println("This will install '"+selectedPack.name+"' version '"+selectedVersion.name+"' of channel '"+selectedVersion.type+"' to '"+installPath.toAbsolutePath().toString()+"'.");
+            System.out.println("This will install '"+selectedPack.name+"' version '"+selectedVersion.name+"' from channel '"+selectedVersion.type+"' to '"+installPath.toAbsolutePath().toString()+"'.");
             System.out.println("Are you sure you wish to continue? [y/n]");
             while (true)
             {
@@ -200,7 +248,7 @@ public class Main {
             for(ServerVersion ver : tmp.versions)
             {
                 if(latest) {
-                    if (ver.type == "Release") {
+                    if (ver.type.equals("Release")) {
                         selectedVersion = ver;
                         break;
                     }
