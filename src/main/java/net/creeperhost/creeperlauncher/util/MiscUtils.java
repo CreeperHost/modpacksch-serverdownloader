@@ -1,5 +1,8 @@
 package net.creeperhost.creeperlauncher.util;
 
+import net.creeperhost.creeperlauncher.CreeperLogger;
+
+import java.net.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
@@ -14,16 +17,48 @@ public class MiscUtils
         return sb.toString();
     }
 
-    public static long unixtime()
+    public static URI findForgeDownloadURL(String minecraftVersion, String forgeVersion)
     {
-        return System.currentTimeMillis() / 1000L;
+        String repo = "https://dist.creeper.host/versions/net/minecraftforge/forge/";
+
+        URI url = null;
+        try {
+            url = new URI(repo + minecraftVersion + "-" + forgeVersion + "/" +
+                    "forge-" + minecraftVersion + "-" + forgeVersion + "-installer.jar");
+
+            if (!checkExist(url.toURL()))
+            {
+                url = new URI(repo + minecraftVersion + "-" + forgeVersion + "-" + minecraftVersion + "/" +
+                        "forge-" + minecraftVersion + "-" + forgeVersion + "-" + minecraftVersion + "-installer.jar");
+
+                if (!checkExist(url.toURL()))
+                {
+                    url = new URI(repo + minecraftVersion + "-" + forgeVersion + "/" +
+                            "forge-" + minecraftVersion + "-" + forgeVersion + "-installer.zip");
+                }
+
+            }
+        } catch (URISyntaxException | MalformedURLException e) {
+            return null;
+        }
+
+        return url;
     }
 
-    public static String getDateAndTime()
+    public static boolean checkExist(URL url)
     {
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.ENGLISH);
-        LocalDateTime now = LocalDateTime.now();
-
-        return dateTimeFormatter.format(now);
+        boolean response;
+        try
+        {
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.connect();
+            response = ((connection.getResponseCode() == 200) && (connection.getContentLength() >= 0));
+            connection.disconnect();
+        } catch (Exception err)
+        {
+            response = false;
+        }
+        return response;
     }
 }

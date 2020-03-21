@@ -65,7 +65,7 @@ public class DownloadableFile
     public void prepare() throws IOException
     {
         if (client == null) client = new OkHttpClientImpl();
-        this.downloadUrl = this.url.toString();
+        if (this.downloadUrl == null) this.downloadUrl = this.url.toString();
         try
         {
             this.url = new URL(this.downloadUrl.replace(" ", "%20"));

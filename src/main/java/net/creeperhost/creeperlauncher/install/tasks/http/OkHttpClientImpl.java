@@ -6,6 +6,7 @@ import okio.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.util.WeakHashMap;
@@ -51,7 +52,24 @@ public class OkHttpClientImpl implements IHttpClient
             if (digest != null) digest.update(_bytes);
         }));
 
-        Response response = client.newCall(request).execute();
+        boolean connEstablished = false;
+        int tries = 0;
+
+        Response response = null;
+
+        while (!connEstablished && tries <= 3)
+        {
+            tries++;
+            try {
+                response = client.newCall(request).execute();
+                connEstablished = true;
+            } catch (SocketTimeoutException ignored) {
+                try {
+                    Thread.sleep(5000);
+                } catch (InterruptedException ignored1) {
+                }
+            }
+        }
 
         BufferedSink sink = Okio.buffer(Okio.sink(destination.toFile()));
         sink.writeAll(response.body().source());
