@@ -30,7 +30,7 @@ public class Main {
     public static AtomicLong overallBytes = new AtomicLong(0);
     public static AtomicLong currentBytes = new AtomicLong(0);
     public static Path installPath;
-    public static String verString = "0.0.1a"
+    public static String verString = "0.0.1a";
     private static ArrayList<ServerPack> packs = new ArrayList<ServerPack>();
     public static void main(String[] args) {
         boolean search = false;
