@@ -26,6 +26,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Main {
     public static AtomicLong overallBytes = new AtomicLong(0);
@@ -35,10 +37,32 @@ public class Main {
     public static String verString = "0.0.1a";
     private static ArrayList<ServerPack> packs = new ArrayList<ServerPack>();
     public static void main(String[] args) {
+        long expectedPack = 0;
+        boolean autoInstall = false;
+        long expectedVer = 0;
+        String installPack = null;
+        String installVer = null;
+        if(args.length > 0)
+        {
+            installPack = args[0];
+        }
+        if(args.length > 1)
+        {
+            installVer = args[1];
+        }
+        String execName = new File(ServerPack.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
+        final String regex = "\\w+\\_(\\d+)\\_(\\d+).*";
+        final Pattern pattern = Pattern.compile(regex);
+        final Matcher matcher = pattern.matcher(execName);
+        try {
+            if (matcher.find()) {
+                installPack = matcher.group(1);
+                installVer = matcher.group(2);
+            }
+        } catch (Exception ignored) {}
         boolean search = false;
         installPath = Paths.get("");
-        long expectedPack = 0;
-        long expectedVer = 0;
+
         String argName = null;
         HashMap<String, String> Args = new HashMap<String, String>();
         for(String arg : args)
@@ -58,6 +82,10 @@ public class Main {
                 }
             }
         }
+        if(installPack != null && installVer != null)
+        {
+            autoInstall = (!Args.containsKey("auto"));
+        }
         if(Args.containsKey("help"))
         {
             System.out.println("                      _                  _              _     ");
@@ -71,14 +99,14 @@ public class Main {
             System.out.println("              modpacks.ch server downloader - v"+verString);
             System.out.println("");
             System.out.println("Usage:");
-            System.out.println("./modpacksch - Start an interactive download and install.");
-            System.out.println("./modpacksch <packid> - Download and install the latest Release version of a modpack by id.");
-            System.out.println("./modpacksch <packid> <versionid> - Download and install a specific version of a modpack by id and version id.");
+            System.out.println(execName+" - Start an interactive download and install.");
+            System.out.println(execName+" <packid> - Download and install the latest Release version of a modpack by id.");
+            System.out.println(execName+" <packid> <versionid> - Download and install a specific version of a modpack by id and version id.");
             System.out.println("");
             System.out.println("Additional arguments:");
             System.out.println("--help - Print this help information.");
             System.out.println("--path - Specify an install path instead of current working directory.");
-            System.out.println("Example: ./modpacksch 47 295 --path /home/ftb/omnia");
+            System.out.println("Example: "+execName+" 47 295 --path /home/ftb/omnia");
             System.out.println("");
             System.exit(0);
         }
@@ -97,16 +125,16 @@ public class Main {
 	    try
         {
             //Do we have an pack ID or are we searching for a pack?
-            expectedPack = Long.parseLong(args[0]);
+            expectedPack = Long.parseLong(installPack);
         } catch(Exception ignored)
         {
             search = true;
         }
 	    if(!search) {
-            if (args.length > 1) {
+            if (args.length > 1||installVer != null) {
                 try {
                     //Do we have a version ID or are we just grabbing the latest?
-                    expectedVer = Long.parseLong(args[1]);
+                    expectedVer = Long.parseLong(installVer);
                     latest = false;
                 } catch (Exception ignored) {
                     latest = true;
@@ -274,6 +302,25 @@ public class Main {
             if(selectedVersion == null) {
                 System.out.println("Invalid version.");
                 System.exit(-4);
+            }
+            if(autoInstall)
+            {
+                int ch = 0;
+                System.out.println("This will install '"+tmp.name+"' version '"+selectedVersion.name+"' from channel '"+selectedVersion.type+"' to '"+installPath.toAbsolutePath().toString()+"'.");
+                System.out.println("Are you sure you wish to continue? [y/n]");
+                while (true)
+                {
+                    try {
+                        if (!((ch = System.in.read()) != -1)) break;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if (ch != '\n' && ch != '\r')
+                    {
+                        if(ch != 'y' && ch != 'Y') System.exit(0);
+                        break;
+                    }
+                }
             }
             System.out.println("Installing '"+tmp.name+"' version '"+selectedVersion.name+"' from channel '"+selectedVersion.type+"' to '"+installPath.toAbsolutePath().toString()+"'...");
             selectedVersion.install();

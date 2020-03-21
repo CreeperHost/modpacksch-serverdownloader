@@ -98,9 +98,6 @@ public class ServerVersion {
                 }
         );
         combinedFuture.join();
-        this.Vanilla // Vanilla version num string (example; 1.15.2)
-        this.ModloaderType // Type of modloader (example; forge)
-        this.Modloader // Forge version string (example; 31.1.18)
         System.out.println("["+Main.dlnum.get()+"/"+files.size()+"] Finished.");
     }
 }
