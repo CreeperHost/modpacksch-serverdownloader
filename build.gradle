@@ -28,22 +28,15 @@ archivesBaseName = "ftbserverdownloader"
 version = "1.0.0"
 targetCompatibility = sourceCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = "11"
 
-
-def mainClassNameGlobal = "net.creeperhost.ftbserverdownloader.FTBServerDownloader"
-
-def mainClassName = mainClassNameGlobal
-
 ext {
+	MAIN_CLASS = "net.creeperhost.ftbserverdownloader.Main"
     MANIFEST = manifest{
+		attributes('Main-Class': MAIN_CLASS)
         attributes([
-                "Main-Class":               mainClassName,
-                "Specification-Title":      "Launcher",
-                "Specification-Vendor":     "Creeperhost LTD",
-                "Specification-Version":    "1.0.0",
-                "Implementation-Title":     "CreeperLauncher",
-                "Implementation-Version":   "1.0.0",
+                "Implementation-Title":     "FTBServerDownloader",
+                "Implementation-Version":   project.version,
                 "Implementation-Vendor":    "Creeperhost LTD"
-        ] as LinkedHashMap, "net/creeperhost/creeperlauncher/")
+        ] as LinkedHashMap, "net/creeperhost/ftbserverdownloader/")
     }
 }
 
