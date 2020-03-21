@@ -37,30 +37,26 @@ public class Main {
         installPath = Paths.get("");
         long expectedPack = 0;
         long expectedVer = 0;
-        boolean latest = true;
-	    try
+        String argName = null;
+        HashMap<String, String> Args = new HashMap<String, String>();
+        for(String arg : args)
         {
-            //Do we have an pack ID or are we searching for a pack?
-            expectedPack = Long.parseLong(args[0]);
-        } catch(Exception ignored)
-        {
-            search = true;
-        }
-	    String argName = null;
-	    HashMap<String, String> Args = new HashMap<String, String>();
-	    for(String arg : args)
-        {
-            if(argName == null)
+            if(arg.substring(0,2).equals("--")) {
+                argName = arg.substring(2);
+                Args.put(argName, "");
+            }
+            if(argName != null)
             {
-                if(arg.substring(0,2).equals("--")) {
-                    argName = arg.substring(2);
+                if(!argName.equals(arg.substring(2))) {
+                    if (Args.containsKey(argName)) {
+                        Args.remove(argName);
+                    }
+                    Args.put(argName, arg);
+                    argName = null;
                 }
-            } else {
-                Args.put(argName, arg);
-                argName = null;
             }
         }
-	    if(Args.containsKey("help"))
+        if(Args.containsKey("help"))
         {
             System.out.println("                      _                  _              _     ");
             System.out.println("                     | |                | |            | |    ");
@@ -70,7 +66,7 @@ public class Main {
             System.out.println(" |_| |_| |_|\\___/ \\__,_| .__/ \\__,_|\\___|_|\\_\\___(_)___|_| |_|");
             System.out.println("                       | |                                    ");
             System.out.println("                       |_|                                    ");
-            System.out.println("            modpacks.ch server downloader - v"+verString);
+            System.out.println("              modpacks.ch server downloader - v"+verString);
             System.out.println("");
             System.out.println("Usage:");
             System.out.println("./modpacksch - Start an interactive download and install.");
@@ -84,14 +80,25 @@ public class Main {
             System.out.println("");
             System.exit(0);
         }
-	    if(Args.containsKey("path"))
+        if(Args.containsKey("path"))
         {
             Path tmpPath = Path.of(Args.get("path"));
             if(!tmpPath.toFile().exists())
             {
                 System.out.println("Requested install path '"+tmpPath.toAbsolutePath().toString()+"' does not exist.");
                 System.exit(-5);
+            } else {
+                installPath = tmpPath;
             }
+        }
+        boolean latest = true;
+	    try
+        {
+            //Do we have an pack ID or are we searching for a pack?
+            expectedPack = Long.parseLong(args[0]);
+        } catch(Exception ignored)
+        {
+            search = true;
         }
 	    if(!search) {
             if (args.length > 1) {
@@ -238,6 +245,7 @@ public class Main {
                 if (ch != '\n' && ch != '\r')
                 {
                     if(ch != 'y' && ch != 'Y') System.exit(0);
+                    break;
                 }
             }
             selectedVersion.install();
@@ -265,7 +273,7 @@ public class Main {
                 System.out.println("Invalid version.");
                 System.exit(-4);
             }
-            System.out.println("Installing '"+tmp.name+"' version '"+selectedVersion.name+"' from channel '"+selectedVersion.type+"' to '"+installPath+"'...");
+            System.out.println("Installing '"+tmp.name+"' version '"+selectedVersion.name+"' from channel '"+selectedVersion.type+"' to '"+installPath.toAbsolutePath().toString()+"'...");
             selectedVersion.install();
         }
     }
