@@ -56,16 +56,20 @@ public class ServerVersion {
     }
     public void install()
     {
+        int num = 0;
         for(DownloadableFile downloadableFile : files) {
             if (!downloadableFile.getClientOnly()) {
                 try {
                     downloadableFile.prepare();
+                    num++;
+                    System.out.println("["+num+"/"+files.size()+"] Downloading '"+downloadableFile.getName()+"' to '"+downloadableFile.getPath()+"' ["+downloadableFile.getSize()+" bytes]...");
                     downloadableFile.download(Main.installPath.resolve(downloadableFile.getPath()).resolve(downloadableFile.getName()), true, false);
                 } catch (Throwable throwable) {
-                    System.out.println("Unable to download: " + throwable.getMessage());
+                    System.out.println("["+num+"/"+files.size()+"] Unable to download: " + throwable.getMessage());
                     throwable.printStackTrace();
                 }
             }
         }
+        System.out.println("["+num+"/"+files.size()+"] Finished.");
     }
 }
