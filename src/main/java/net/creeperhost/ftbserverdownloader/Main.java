@@ -24,11 +24,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Main {
     public static AtomicLong overallBytes = new AtomicLong(0);
     public static AtomicLong currentBytes = new AtomicLong(0);
+    public static AtomicInteger dlnum = new AtomicInteger();
     public static Path installPath;
     public static String verString = "0.0.1a";
     private static ArrayList<ServerPack> packs = new ArrayList<ServerPack>();
@@ -276,6 +278,7 @@ public class Main {
             System.out.println("Installing '"+tmp.name+"' version '"+selectedVersion.name+"' from channel '"+selectedVersion.type+"' to '"+installPath.toAbsolutePath().toString()+"'...");
             selectedVersion.install();
         }
+	    System.exit(0);
     }
 
 /*    void downloadFiles(File instanceDir, File forgeLibs)
