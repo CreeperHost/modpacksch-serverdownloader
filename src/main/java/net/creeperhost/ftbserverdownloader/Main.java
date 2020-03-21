@@ -65,9 +65,9 @@ public class Main {
             System.out.println("                      _                  _              _     ");
             System.out.println("                     | |                | |            | |    ");
             System.out.println("  _ __ ___   ___   __| |_ __   __ _  ___| | _____   ___| |__  ");
-            System.out.println(" | '_ ` _ \ / _ \ / _` | '_ \ / _` |/ __| |/ / __| / __| '_ \ ");
-            System.out.println(" | | | | | | (_) | (_| | |_) | (_| | (__|   <\__ \| (__| | | |");
-            System.out.println(" |_| |_| |_|\___/ \__,_| .__/ \__,_|\___|_|\_\___(_)___|_| |_|");
+            System.out.println(" | '_ ` _ \\ / _ \\ / _` | '_ \\ / _` |/ __| |/ / __| / __| '_ \\ ");
+            System.out.println(" | | | | | | (_) | (_| | |_) | (_| | (__|   <\\__ \\| (__| | | |");
+            System.out.println(" |_| |_| |_|\\___/ \\__,_| .__/ \\__,_|\\___|_|\\_\\___(_)___|_| |_|");
             System.out.println("                       | |                                    ");
             System.out.println("                       |_|                                    ");
             System.out.println("            modpacks.ch server downloader - v"+verString);
