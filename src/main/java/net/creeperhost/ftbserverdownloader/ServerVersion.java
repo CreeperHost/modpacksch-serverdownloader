@@ -18,6 +18,7 @@ import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -109,9 +110,19 @@ public class ServerVersion {
                 }
             }
         }
-
+        ArrayList<String> directories = new ArrayList<String>();
         for(DownloadableFile downloadableFile : files) {
             if (!downloadableFile.getClientOnly()) {
+                if(!directories.contains(downloadableFile.getPath()))
+                {
+                    if(downloadableFile.getPath().length() > 1) {
+                        directories.add(downloadableFile.getPath());
+                        File dr = Main.installPath.resolve(downloadableFile.getPath()).toFile();
+                        if(dr.exists()) {
+                            dr.delete();
+                        }
+                    }
+                }
                 futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         downloadableFile.prepare();
