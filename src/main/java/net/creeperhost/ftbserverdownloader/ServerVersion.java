@@ -181,7 +181,7 @@ public class ServerVersion {
             File bash = new File("start.sh");
             try {
                 if (bash.createNewFile()) {
-                    String bashFile = "#!/bin/bash\r\necho \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\r\n$EULA=${read  -n 1 -p \"[y/n]\"}\r\nif [ \"$EULA\" = \"y\" ]; then\r\n    echo \"eula=true\" > eula.txt\r\nfi\r\njava "+startCmd;
+                    String bashFile = "#!/bin/bash\necho \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n$EULA=${read  -n 1 -p \"[y/n]\"}\nif [ \"$EULA\" = \"y\" ]; then\n    echo \"eula=true\" > eula.txt\nfi\njava "+startCmd;
                     FileWriter bashWriter = new FileWriter(bash.toPath().toAbsolutePath().toString());
                     bashWriter.write(bashFile);
                     bashWriter.close();
