@@ -10,9 +10,7 @@ import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
-import java.io.File;
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -35,11 +33,13 @@ public class Main {
     public static void main(String[] args) {
         boolean search = false;
         installPath = Paths.get("");
+        long expectedPack = 0;
+        long expectedVer = 0;
         boolean latest = true;
 	    try
         {
             //Do we have an pack ID or are we searching for a pack?
-            Long.parseLong(args[0]);
+            expectedPack = Long.parseLong(args[0]);
         } catch(Exception ignored)
         {
             search = true;
@@ -48,38 +48,66 @@ public class Main {
             if (args.length > 1) {
                 try {
                     //Do we have a version ID or are we just grabbing the latest?
-                    Long.parseLong(args[1]);
+                    expectedVer = Long.parseLong(args[1]);
+                    latest = false;
                 } catch (Exception ignored) {
-                    search = true;
+                    latest = true;
                 }
             }
         }
-	    if(search)
-        {
+	    if(search) {
             String term = null;
-            try {
-                term = URLEncoder.encode(args[0], "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+            if(args.length > 0) {
+                try {
+                    term = URLEncoder.encode(args[0], "UTF-8");
+                } catch (UnsupportedEncodingException e) {
+                    e.printStackTrace();
+                }
             }
+            int ch = 0;
+            if(term == null)
+            {
+                System.out.println("Please enter a search term to view modpacks (Minimum 4 characters)");
+                try {
+                    BufferedReader reader = new BufferedReader( new InputStreamReader( System.in ) );
+                    String input = new String();
+                    while( input.length() < 1 ){
+
+                        input = reader.readLine();
+                    }
+                    if(input.length() < 4)
+                    {
+                        System.out.println("Please try again, term too short.");
+                        System.exit(-1);
+                    } else {
+                        try {
+                            term = URLEncoder.encode(input, "UTF-8");
+                        } catch (UnsupportedEncodingException e) {
+                            System.out.println("Please try again, term contains invalid characters.");
+                            System.exit(-2);
+                        }
+                    }
+                }
+                catch(Exception ignored){}
+            }
+            System.out.println("Searching for '"+term+"'...");
             ArrayList<CompletableFuture> futures = new ArrayList<>();
             HttpClient wclient = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create("https://api.modpacks.ch/public/modpack/search/8?term="+term))
-                        .build();
+                    .uri(URI.create("https://api.modpacks.ch/public/modpack/search/8?term=" + term))
+                    .build();
             wclient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                     .thenApply(HttpResponse::body)
                     .thenAccept((String data) -> {
                         Gson gson = new Gson();
                         JsonObject apiresp = gson.fromJson(data, JsonObject.class);
                         JsonArray packs = apiresp.getAsJsonArray("packs");
-                        for(JsonElement pack : packs)
-                        {
+                        for (JsonElement pack : packs) {
                             long packId = pack.getAsLong();
                             ServerPack tmp = new ServerPack(packId);
                             futures.add(CompletableFuture.runAsync(() -> {
-                               tmp.downloadManifest();
-                               Main.packs.add(tmp);
+                                tmp.downloadManifest();
+                                Main.packs.add(tmp);
                             }));
                         }
                     }).join();
@@ -92,11 +120,105 @@ public class Main {
             );
             combinedFuture.join();
 
-        }
 
-	    packs.
-                get(0).versions.
-                get(0).install();
+            int num = 1;
+            System.out.println("Please choose a pack from the options below:");
+            for (ServerPack pack : packs) {
+                System.out.println(num+") " + pack.name);
+                num++;
+            }
+            ServerPack selectedPack = null;
+            ch = 0;
+            while (true)
+            {
+                try {
+                    if (!((ch = System.in.read()) != -1)) break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (ch != '\n' && ch != '\r')
+                {
+                    int tpack = (Integer.parseInt(String.valueOf((char)ch))-1);
+                    if(tpack >= 0 && tpack <= (packs.size()-1)) {
+                        selectedPack = packs.get(tpack);
+                        break;
+                    } else {
+                        System.out.println("Invalid selection, please try again.");
+                    }
+                }
+            }
+            System.out.println("Selected '"+selectedPack.name+"'...");
+            num = 1;
+            System.out.println("Please select a version below:");
+            for(ServerVersion version : selectedPack.versions)
+            {
+                System.out.println(num+") " + version.name + " ["+ version.type + "]");
+                num++;
+                if(num > 9) break;
+            }
+            ServerVersion selectedVersion = null;
+            ch = 0;
+            while (true)
+            {
+                try {
+                    if (!((ch = System.in.read()) != -1)) break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (ch != '\n' && ch != '\r')
+                {
+                    int tpack = (Integer.parseInt(String.valueOf((char)ch))-1);
+                    if(tpack >= 0 && tpack <= (selectedPack.versions.size()-1)) {
+                        selectedVersion = selectedPack.versions.get(tpack);
+                        break;
+                    } else {
+                        System.out.println("Invalid selection, please try again.");
+                    }
+                }
+            }
+            ch = 0;
+            System.out.println("This will install '"+selectedPack.name+"' version '"+selectedVersion.name+"' of channel '"+selectedVersion.type+"' to '"+installPath.toAbsolutePath().toString()+"'.");
+            System.out.println("Are you sure you wish to continue? [y/n]");
+            while (true)
+            {
+                try {
+                    if (!((ch = System.in.read()) != -1)) break;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (ch != '\n' && ch != '\r')
+                {
+                    if(ch != 'y' && ch != 'Y') System.exit(0);
+                }
+            }
+            selectedVersion.install();
+        } else {
+            ServerPack tmp = new ServerPack(expectedPack);
+            tmp.downloadManifest();
+            ServerVersion selectedVersion = null;
+            Main.packs.add(tmp);
+            for(ServerVersion ver : tmp.versions)
+            {
+                if(latest) {
+                    if (ver.type == "Release") {
+                        selectedVersion = ver;
+                        break;
+                    }
+                } else {
+                    if(ver.id == expectedVer)
+                    {
+                        selectedVersion = ver;
+                        break;
+                    }
+                }
+            }
+            if(selectedVersion == null) {
+                System.out.println("Invalid version.");
+                System.exit(-4);
+            }
+            System.out.println("Installing '"+tmp.name+"' version '"+selectedVersion.name+"' from channel '"+selectedVersion.type+"' to '"+installPath+"'...");
+            selectedVersion.install();
+        }
     }
 
 /*    void downloadFiles(File instanceDir, File forgeLibs)
