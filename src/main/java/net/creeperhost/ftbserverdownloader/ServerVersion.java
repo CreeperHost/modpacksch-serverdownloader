@@ -8,6 +8,8 @@ import net.creeperhost.creeperlauncher.CreeperLogger;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
 
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -27,6 +29,8 @@ public class ServerVersion {
     public String type;
     public String Modloader;
     public String ModloaderType;
+    public long minimumRam;
+    public long recommendRam;
     public String Vanilla;
     private ArrayList<CompletableFuture> futures = new ArrayList<>();
     private ArrayList<DownloadableFile> files = new ArrayList<DownloadableFile>();
@@ -50,6 +54,9 @@ public class ServerVersion {
                     JsonArray targets = apiresp.getAsJsonArray("targets");
                     this.name = apiresp.get("name").getAsString();
                     this.type = apiresp.get("type").getAsString();
+                    JsonObject specs = apiresp.getAsJsonObject("specs");
+                    this.minimumRam = specs.get("minimum").getAsLong();
+                    this.recommendRam = specs.get("recommended").getAsLong();
                     for(JsonElement target : targets)
                     {
                         JsonObject tar = target.getAsJsonObject();
@@ -162,7 +169,38 @@ public class ServerVersion {
         } else {
             System.out.println("Modloader type " + ModloaderType + " is not currently supported. Please check if an updated version of the downloader is available.");
         }
-
+        if(Main.generateStart) {
+            String forgeJar = "";
+            if (Main.installPath.resolveSibling("forge-" + Vanilla + "-" + Modloader + ".jar").toFile().exists()) {
+                forgeJar = "forge-" + Vanilla + "-" + Modloader + ".jar";
+            }
+            if (Main.installPath.resolveSibling("forge-" + Vanilla + "-" + Modloader + "-universal.jar").toFile().exists()) {
+                forgeJar = "forge-" + Vanilla + "-" + Modloader + "-universal.jar";
+            }
+            String startCmd = "-server -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx" + this.recommendRam + "M -Xms" + this.minimumRam + "M -jar "+forgeJar+" nogui";
+            File bash = new File("start.sh");
+            try {
+                if (bash.createNewFile()) {
+                    String bashFile = "#!/bin/bash\r\necho \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\r\n$EULA=${read  -n 1 -p \"[y/n]\"}\r\nif [ \"$EULA\" = \"y\" ]; then\r\n    echo \"eula=true\" > eula.txt\r\nfi\r\njava "+startCmd;
+                    FileWriter bashWriter = new FileWriter(bash.toPath().toAbsolutePath().toString());
+                    bashWriter.write(bashFile);
+                    bashWriter.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            File batch = new File("start.bat");
+            try {
+                if (batch.createNewFile()) {
+                    String batchFile = "@echo off\r\necho \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\r\nset /p EULA=[y/n]\r\nIF /I \"%EULA%\" NEQ \"y\" GOTO END\r\necho eula=true>eula.txt\r\n:END\r\njava.exe "+startCmd;
+                    FileWriter batchWriter = new FileWriter(batch.toPath().toAbsolutePath().toString());
+                    batchWriter.write(batchFile);
+                    batchWriter.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         System.out.println("Pack install Finished.");
     }
 }

@@ -35,6 +35,7 @@ public class Main {
     public static AtomicInteger dlnum = new AtomicInteger();
     public static Path installPath;
     public static String verString = "0.0.1a";
+    public static boolean generateStart = true;
     private static ArrayList<ServerPack> packs = new ArrayList<ServerPack>();
     public static void main(String[] args) {
         long expectedPack = 0;
@@ -86,6 +87,7 @@ public class Main {
         {
             autoInstall = (!Args.containsKey("auto"));
         }
+        generateStart = (!Args.containsKey("noscript"));
         if(Args.containsKey("help"))
         {
             System.out.println("                      _                  _              _     ");
@@ -106,6 +108,9 @@ public class Main {
             System.out.println("Additional arguments:");
             System.out.println("--help - Print this help information.");
             System.out.println("--path - Specify an install path instead of current working directory.");
+            System.out.println("--auto - Automatically install a pack for filename based pack installs.");
+            System.out.println("--noscript - Don't generate start.sh and start.bat files.");
+            System.out.println("--latest - Ignore any specific modpack version id provided and always download the latest.");
             System.out.println("Example: "+execName+" 47 295 --path /home/ftb/omnia");
             System.out.println("");
             System.exit(0);
@@ -140,6 +145,10 @@ public class Main {
                     latest = true;
                 }
             }
+        }
+	    if(Args.containsKey("latest"))
+        {
+            latest = true;
         }
 	    if(search) {
             String term = null;
