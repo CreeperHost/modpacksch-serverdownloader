@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.CreeperLogger;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
+import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
 
 import java.io.File;
@@ -110,6 +111,23 @@ public class ServerVersion {
                 }
             }
         }
+        //Here for if needed...
+        /*File mods = new File(Main.installPath.toFile(), "mods/");
+        File coremods = new File(Main.installPath.toFile(), "coremods/");
+        File instmods = new File(Main.installPath.toFile(), "instmods/");
+
+        File config = new File(Main.installPath.toFile(), "config/");
+        File resources = new File(Main.installPath.toFile(), "resources/");
+        File scripts = new File(Main.installPath.toFile(), "scripts/");
+
+        FileUtils.deleteDirectory(mods);
+        FileUtils.deleteDirectory(coremods);
+        FileUtils.deleteDirectory(instmods);
+        FileUtils.deleteDirectory(config);
+        FileUtils.deleteDirectory(resources);
+        FileUtils.deleteDirectory(scripts);*/
+
+
         ArrayList<String> directories = new ArrayList<String>();
         for(DownloadableFile downloadableFile : files) {
             if (!downloadableFile.getClientOnly()) {
@@ -119,7 +137,7 @@ public class ServerVersion {
                         directories.add(downloadableFile.getPath());
                         File dr = Main.installPath.resolve(downloadableFile.getPath()).toFile();
                         if(dr.exists()) {
-                            dr.delete();
+                           FileUtils.deleteDirectory(dr);
                         }
                     }
                 }

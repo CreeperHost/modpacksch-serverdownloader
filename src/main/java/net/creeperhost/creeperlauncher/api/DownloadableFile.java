@@ -211,9 +211,14 @@ public class DownloadableFile
 
     public String getPath()
     {
-        if(this.path.substring(0,1).equals("/"))
-        {
-            this.path = this.path.substring(1);
+        if(this.path.length() > 1) {
+            if (this.path.substring(0, 1).equals("/")) {
+                this.path = this.path.substring(1);
+            }
+        } else {
+            if (this.path.equals("/")) {
+                this.path = "";
+            }
         }
         return this.path;
     }
