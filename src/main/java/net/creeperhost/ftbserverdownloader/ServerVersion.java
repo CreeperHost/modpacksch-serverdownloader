@@ -20,6 +20,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,6 +51,19 @@ public class ServerVersion {
         wclient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
                 .thenAccept((String data) -> {
+                    File versionJson = Main.installPath.resolve("version.json").toFile();
+                    if(versionJson.exists())
+                    {
+                        versionJson.delete();
+                    }
+                    try {
+                        versionJson.createNewFile();
+                        FileWriter jsonWriter = new FileWriter(versionJson.toString());
+                        jsonWriter.write(data);
+                        jsonWriter.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
                     Gson gson = new Gson();
                     JsonObject apiresp = gson.fromJson(data, JsonObject.class);
                     JsonArray files = apiresp.getAsJsonArray("files");
