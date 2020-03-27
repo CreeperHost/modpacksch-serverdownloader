@@ -16,6 +16,8 @@ import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -146,11 +148,22 @@ public class DownloadableFile
             }
         }
         Path parent = destination.getParent();
+        ArrayList<Path> dirs = new ArrayList<>();
         while(parent != null)
         {
-            parent.toFile().mkdir();
+            if (!parent.toFile().exists()) {
+                dirs.add(parent);
+            }
             parent = parent.getParent();
         }
+
+        Collections.reverse(dirs);
+
+        for(Path dir: dirs)
+        {
+            dir.toFile().mkdirs();
+        }
+
         DownloadedFile send = client.doDownload(this.downloadUrl, destination, (downloaded, delta, total, done) ->
         {
             Main.currentBytes.addAndGet(delta);

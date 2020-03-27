@@ -62,7 +62,7 @@ public class Main {
             }
         } catch (Exception ignored) {}
         boolean search = false;
-        installPath = Paths.get("");
+        installPath = Paths.get("./");
 
         String argName = null;
         HashMap<String, String> Args = new HashMap<String, String>();
