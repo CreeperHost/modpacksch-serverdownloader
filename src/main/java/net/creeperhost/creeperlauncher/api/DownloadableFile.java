@@ -145,10 +145,11 @@ public class DownloadableFile
                 }
             }
         }
-        File dirPath = destination.getParent().toFile();
-        if (!dirPath.exists())
+        Path parent = destination.getParent();
+        while(parent != null)
         {
-            dirPath.mkdirs();
+            parent.toFile().mkdir();
+            parent = parent.getParent();
         }
         DownloadedFile send = client.doDownload(this.downloadUrl, destination, (downloaded, delta, total, done) ->
         {

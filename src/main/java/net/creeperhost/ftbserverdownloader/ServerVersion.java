@@ -89,7 +89,18 @@ public class ServerVersion {
 
                     for (JsonElement file : files) {
                         JsonObject fileInfo = file.getAsJsonObject();
-                        DownloadableFile downloadableFile = gson.fromJson(file, DownloadableFile.class);
+                        DownloadableFile downloadableFile = new DownloadableFile(
+                                fileInfo.get("version").getAsString(),
+                                fileInfo.get("path").getAsString(),
+                                fileInfo.get("url").getAsString(),
+                                new ArrayList<>(){{add(fileInfo.get("sha1").getAsString());}},
+                                fileInfo.get("size").getAsLong(),
+                                fileInfo.get("clientonly").getAsBoolean(),
+                                fileInfo.get("optional").getAsBoolean(),
+                                fileInfo.get("id").getAsLong(),
+                                fileInfo.get("name").getAsString(),
+                                fileInfo.get("type").getAsString(),
+                                fileInfo.get("updated").getAsString());
                         this.files.add(downloadableFile);
                     }
                 }).join();
