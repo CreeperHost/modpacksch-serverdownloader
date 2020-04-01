@@ -22,10 +22,25 @@ public class OkHttpClientImpl implements IHttpClient
         builder.addInterceptor((chain) ->
         {
             Request request = chain.request();
-            Response originalResponse = chain.proceed(request);
+            Response originalResponse = null;
+            int tries = 0;
+            IOException lastException = null;
+            while(originalResponse == null && tries < 5) { // handle timeouts here
+                try {
+                    tries++;
+                    originalResponse = chain.proceed(request);
+                } catch (IOException exception) {
+                    lastException = exception;
+                }
+            }
+            if (originalResponse == null)
+            {
+                throw lastException;
+            }
             return originalResponse.newBuilder()
                     .body(new ProgressResponseBody(originalResponse.body(), requestMap.get(request)))
                     .build();
+
         });
         client = builder.build();
     }

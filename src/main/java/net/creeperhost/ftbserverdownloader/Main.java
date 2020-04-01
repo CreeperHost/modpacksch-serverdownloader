@@ -34,7 +34,7 @@ public class Main {
     public static AtomicLong currentBytes = new AtomicLong(0);
     public static AtomicInteger dlnum = new AtomicInteger();
     public static Path installPath;
-    public static String verString = "0.0.1a";
+    public static String verString = "@VERSION@";
     public static boolean generateStart = true;
     private static ArrayList<ServerPack> packs = new ArrayList<ServerPack>();
     public static void main(String[] args) {

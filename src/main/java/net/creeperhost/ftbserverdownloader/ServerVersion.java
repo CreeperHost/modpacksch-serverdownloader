@@ -51,19 +51,6 @@ public class ServerVersion {
         wclient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)
                 .thenAccept((String data) -> {
-                    File versionJson = Main.installPath.resolve("version.json").toFile();
-                    if(versionJson.exists())
-                    {
-                        versionJson.delete();
-                    }
-                    try {
-                        versionJson.createNewFile();
-                        FileWriter jsonWriter = new FileWriter(versionJson.toString());
-                        jsonWriter.write(data);
-                        jsonWriter.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
                     Gson gson = new Gson();
                     JsonObject apiresp = gson.fromJson(data, JsonObject.class);
                     JsonArray files = apiresp.getAsJsonArray("files");
@@ -136,6 +123,10 @@ public class ServerVersion {
                 }
             }
         }
+
+        files.add(new DownloadableFile("version", "./", "https://api.modpacks.ch/public/modpack/"+this.pack+"/"+this.id, null, -1, false, false, -1, "version.json", "modloader", "0")); // download version
+
+
         //Here for if needed...
         /*File mods = new File(Main.installPath.toFile(), "mods/");
         File coremods = new File(Main.installPath.toFile(), "coremods/");
