@@ -149,7 +149,7 @@ public class ServerVersion {
             if (!downloadableFile.getClientOnly()) {
                 if(!directories.contains(downloadableFile.getPath()))
                 {
-                    if(downloadableFile.getPath().length() > 1) {
+                    if(downloadableFile.getPath().length() > 2) {
                         directories.add(downloadableFile.getPath());
                         File dr = Main.installPath.resolve(downloadableFile.getPath()).toFile();
                         if(dr.exists()) {
