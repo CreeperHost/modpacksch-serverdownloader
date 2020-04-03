@@ -11,6 +11,7 @@ buildscript {
 plugins {
     id "com.github.johnrengelman.shadow" version "5.0.0"
     id "com.install4j.gradle" version "8.0.4"
+    id "com.palantir.git-version" version "0.12.2"
 }
 
 apply plugin: "maven"
@@ -24,8 +25,9 @@ repositories {
 
 
 group = "net.creeperhost"
-archivesBaseName = "ftbserverdownloader"
-version = "1.0.0"
+archivesBaseName = "modpackserverdownloader"
+ext.details = versionDetails()
+version = details.lastTag;
 targetCompatibility = sourceCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = "11"
 
 ext {
@@ -33,7 +35,7 @@ ext {
     MANIFEST = manifest{
 		attributes('Main-Class': MAIN_CLASS)
         attributes([
-                "Implementation-Title":     "FTBServerDownloader",
+                "Implementation-Title":     "ModpackServerDownloader",
                 "Implementation-Version":   project.version,
                 "Implementation-Vendor":    "Creeperhost LTD"
         ] as LinkedHashMap, "net/creeperhost/ftbserverdownloader/")

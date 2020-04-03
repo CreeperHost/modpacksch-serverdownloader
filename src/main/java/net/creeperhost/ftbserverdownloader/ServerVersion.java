@@ -126,9 +126,7 @@ public class ServerVersion {
 
         files.add(new DownloadableFile("version", "./", "https://api.modpacks.ch/public/modpack/"+this.pack+"/"+this.id, null, -1, false, false, -1, "version.json", "modloader", "0")); // download version
 
-
-        //Here for if needed...
-        /*File mods = new File(Main.installPath.toFile(), "mods/");
+        File mods = new File(Main.installPath.toFile(), "mods/");
         File coremods = new File(Main.installPath.toFile(), "coremods/");
         File instmods = new File(Main.installPath.toFile(), "instmods/");
 
@@ -141,13 +139,14 @@ public class ServerVersion {
         FileUtils.deleteDirectory(instmods);
         FileUtils.deleteDirectory(config);
         FileUtils.deleteDirectory(resources);
-        FileUtils.deleteDirectory(scripts);*/
+        FileUtils.deleteDirectory(scripts);
 
 
         ArrayList<String> directories = new ArrayList<String>();
         for(DownloadableFile downloadableFile : files) {
             if (!downloadableFile.getClientOnly()) {
-                if(!directories.contains(downloadableFile.getPath()))
+                //Just feels too dangerous in case someone makes a mistake in the db.
+                /*if(!directories.contains(downloadableFile.getPath()))
                 {
                     if(downloadableFile.getPath().length() > 2) {
                         directories.add(downloadableFile.getPath());
@@ -156,7 +155,7 @@ public class ServerVersion {
                            FileUtils.deleteDirectory(dr);
                         }
                     }
-                }
+                }*/
                 futures.add(CompletableFuture.runAsync(() -> {
                     try {
                         downloadableFile.prepare();

@@ -88,20 +88,21 @@ public class Main {
             autoInstall = (!Args.containsKey("auto"));
         }
         generateStart = (!Args.containsKey("noscript"));
+        System.out.println("                      _                  _              _     ");
+        System.out.println("                     | |                | |            | |    ");
+        System.out.println("  _ __ ___   ___   __| |_ __   __ _  ___| | _____   ___| |__  ");
+        System.out.println(" | '_ ` _ \\ / _ \\ / _` | '_ \\ / _` |/ __| |/ / __| / __| '_ \\ ");
+        System.out.println(" | | | | | | (_) | (_| | |_) | (_| | (__|   <\\__ \\| (__| | | |");
+        System.out.println(" |_| |_| |_|\\___/ \\__,_| .__/ \\__,_|\\___|_|\\_\\___(_)___|_| |_|");
+        System.out.println("                       | |                                    ");
+        System.out.println("                       |_|                                    ");
+        System.out.println("              modpacks.ch server downloader - build "+verString);
+        System.out.println("");
         if(Args.containsKey("help"))
         {
-            System.out.println("                      _                  _              _     ");
-            System.out.println("                     | |                | |            | |    ");
-            System.out.println("  _ __ ___   ___   __| |_ __   __ _  ___| | _____   ___| |__  ");
-            System.out.println(" | '_ ` _ \\ / _ \\ / _` | '_ \\ / _` |/ __| |/ / __| / __| '_ \\ ");
-            System.out.println(" | | | | | | (_) | (_| | |_) | (_| | (__|   <\\__ \\| (__| | | |");
-            System.out.println(" |_| |_| |_|\\___/ \\__,_| .__/ \\__,_|\\___|_|\\_\\___(_)___|_| |_|");
-            System.out.println("                       | |                                    ");
-            System.out.println("                       |_|                                    ");
-            System.out.println("              modpacks.ch server downloader - v"+verString);
-            System.out.println("");
             System.out.println("Usage:");
             System.out.println(execName+" - Start an interactive download and install.");
+            System.out.println(execName+" searchterm - Search for a modpack and start interactive download and install.");
             System.out.println(execName+" <packid> - Download and install the latest Release version of a modpack by id.");
             System.out.println(execName+" <packid> <versionid> - Download and install a specific version of a modpack by id and version id.");
             System.out.println("");
@@ -233,11 +234,16 @@ public class Main {
                 }
                 if (ch != '\n' && ch != '\r')
                 {
-                    int tpack = (Integer.parseInt(String.valueOf((char)ch))-1);
-                    if(tpack >= 0 && tpack <= (packs.size()-1)) {
-                        selectedPack = packs.get(tpack);
-                        break;
-                    } else {
+                    try {
+                        int tpack = (Integer.parseInt(String.valueOf((char) ch)) - 1);
+                        if (tpack >= 0 && tpack <= (packs.size() - 1)) {
+                            selectedPack = packs.get(tpack);
+                            break;
+                        } else {
+                            System.out.println("Invalid selection, please try again.");
+                        }
+                    } catch (Exception ignored)
+                    {
                         System.out.println("Invalid selection, please try again.");
                     }
                 }
@@ -262,17 +268,23 @@ public class Main {
                 }
                 if (ch != '\n' && ch != '\r')
                 {
-                    int tpack = (Integer.parseInt(String.valueOf((char)ch))-1);
-                    if(tpack >= 0 && tpack <= (selectedPack.versions.size()-1)) {
-                        selectedVersion = selectedPack.versions.get(tpack);
-                        break;
-                    } else {
+                    try {
+                        int tpack = (Integer.parseInt(String.valueOf((char) ch)) - 1);
+                        if (tpack >= 0 && tpack <= (selectedPack.versions.size() - 1)) {
+                            selectedVersion = selectedPack.versions.get(tpack);
+                            break;
+                        } else {
+                            System.out.println("Invalid selection, please try again.");
+                        }
+                    } catch (Exception ignored)
+                    {
                         System.out.println("Invalid selection, please try again.");
                     }
                 }
             }
             ch = 0;
             System.out.println("This will install '"+selectedPack.name+"' version '"+selectedVersion.name+"' from channel '"+selectedVersion.type+"' to '"+installPath.toAbsolutePath().toString()+"'.");
+            System.out.println("If you are unhappy with this installation location, please move this executable to your desired location or use the arguments available by running this with --help to customise your install.");
             System.out.println("Are you sure you wish to continue? [y/n]");
             while (true)
             {
