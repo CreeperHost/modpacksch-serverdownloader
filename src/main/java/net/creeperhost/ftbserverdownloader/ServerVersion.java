@@ -8,6 +8,7 @@ import net.creeperhost.creeperlauncher.CreeperLogger;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
+import okhttp3.internal.http.HttpHeaders;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -180,7 +181,18 @@ public class ServerVersion {
         combinedFuture.join();
 
         System.out.println("["+Main.dlnum.get()+"/"+files.size()+"] Finished.");
-
+        try {
+            HttpClient wclient = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.modpacks.ch/public/modpack/" + this.pack + "/" + this.id))
+                    .setHeader("User-Agent", "ModpackServerDownloader/"+Main.verString)
+                    .build();
+            wclient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenApply(HttpResponse::body)
+                    .thenAccept((String data) -> {
+                        //Not sure we'd ever wanna do anything with this anyway.
+                    }).join();
+        } catch (Exception ignored) {}//Nobody cares if our analytics fail... Not even us.
         if (ModloaderType.equals("forge")) {
             if (modloaderDownloading)
             {
