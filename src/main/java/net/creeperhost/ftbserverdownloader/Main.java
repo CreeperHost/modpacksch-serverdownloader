@@ -18,10 +18,7 @@ import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -305,6 +302,7 @@ public class Main {
             tmp.downloadManifest();
             ServerVersion selectedVersion = null;
             Main.packs.add(tmp);
+            Collections.reverse(tmp.versions);
             for(ServerVersion ver : tmp.versions)
             {
                 if(latest) {

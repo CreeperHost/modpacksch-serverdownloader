@@ -4,27 +4,19 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.creeperhost.creeperlauncher.CreeperLogger;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
-import okhttp3.internal.http.HttpHeaders;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ServerVersion {
     public long id;
@@ -214,7 +206,7 @@ public class ServerVersion {
                 System.out.println("=================  FORGE INSTALL ENDS  =================");
 
                 if (error) {
-                    System.out.println("An error occurred whilst installing forge " + Modloader + ". Please install manually.");
+                    //System.out.println("An error occurred whilst installing forge " + Modloader + ". Please install manually.");
                 } else {
                     Main.installPath.resolveSibling(installerFileName + ".log").toFile().delete();
                     Main.installPath.resolveSibling(installerFileName).toFile().delete();
@@ -234,7 +226,7 @@ public class ServerVersion {
                 forgeJar = "forge-" + Vanilla + "-" + Modloader + "-universal.jar";
             }
             String startCmd = "-server -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx" + this.recommendRam + "M -Xms" + this.minimumRam + "M -jar "+forgeJar+" nogui";
-            File bash = new File("start.sh");
+            File bash = new File(Main.installPath.resolve("start.sh").toAbsolutePath().toString());
             try {
                 if (bash.createNewFile()) {
                     String bashFile = "#!/bin/bash\necho \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n$EULA=${read  -n 1 -p \"[y/n]\"}\nif [ \"$EULA\" = \"y\" ]; then\n    echo \"eula=true\" > eula.txt\nfi\njava "+startCmd;
@@ -245,7 +237,7 @@ public class ServerVersion {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            File batch = new File("start.bat");
+            File batch = new File(Main.installPath.resolve("start.bat").toAbsolutePath().toString());
             try {
                 if (batch.createNewFile()) {
                     String batchFile = "@echo off\r\necho \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\r\nset /p EULA=[y/n]\r\nIF /I \"%EULA%\" NEQ \"y\" GOTO END\r\necho eula=true>eula.txt\r\n:END\r\njava.exe "+startCmd;

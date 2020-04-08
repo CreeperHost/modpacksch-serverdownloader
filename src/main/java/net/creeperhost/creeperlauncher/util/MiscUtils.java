@@ -1,11 +1,6 @@
 package net.creeperhost.creeperlauncher.util;
 
-import net.creeperhost.creeperlauncher.CreeperLogger;
-
 import java.net.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.Locale;
 
 public class MiscUtils
 {
