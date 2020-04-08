@@ -248,6 +248,7 @@ public class Main {
             System.out.println("Selected '"+selectedPack.name+"'...");
             num = 1;
             System.out.println("Please select a version below:");
+            Collections.reverse(selectedPack.versions);
             for(ServerVersion version : selectedPack.versions)
             {
                 System.out.println(num+") " + version.name + " ["+ version.type + "]");
