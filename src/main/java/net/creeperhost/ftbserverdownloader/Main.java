@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.CreeperLogger;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
 import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
+import net.creeperhost.creeperlauncher.util.ProcessUtils;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
@@ -25,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 public class Main {
     public static AtomicLong overallBytes = new AtomicLong(0);
@@ -35,11 +37,14 @@ public class Main {
     public static boolean generateStart = true;
     private static ArrayList<ServerPack> packs = new ArrayList<ServerPack>();
     public static void main(String[] args) {
+        ProcessHandle current = ProcessHandle.current();
         long expectedPack = 0;
         boolean autoInstall = false;
         long expectedVer = 0;
         String installPack = null;
         String installVer = null;
+        boolean search = false;
+        String argName = null;
         if(args.length > 0)
         {
             installPack = args[0];
@@ -51,36 +56,55 @@ public class Main {
         String execName = "unknownInstaller";
         try {
             File execFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
-            if(execFile == null)
-            {
-                execName = ProcessHandle.current().info().command().get();
+            if (execFile == null || !execFile.exists()) {
+                if (current.info().command().isPresent()) {
+                    execFile = new File(current.info().command().get());
+                    execName = execFile.getName();
+                } else {
+                    try {
+                        String tmpExec = ProcessUtils.GetUnixExec(current.pid());
+                        if (tmpExec != null) execName = tmpExec;
+                    } catch (IOException err) {
+                        err.printStackTrace();
+                    }
+                }
             } else {
                 execName = execFile.getName();
                 if (execName == null) {
-                    execName = ProcessHandle.current().info().command().get();
+                    if (current.info().command().isPresent()) {
+                        execFile = new File(current.info().command().get());
+                        execName = execFile.getName();
+                    } else {
+                        try {
+                            String tmpExec = ProcessUtils.GetUnixExec(current.pid());
+                            if (tmpExec != null) execName = tmpExec;
+                        } catch (IOException err) {
+                            err.printStackTrace();
+                        }
+                    }
                 }
             }
+        } catch (Exception ignored) {}
+        if(execName.equals("unknownInstaller"))
+        {
+            try
+            {
+                String tmpExec = ProcessUtils.GetUnixExec(current.pid());
+                if(tmpExec != null) execName = tmpExec;
+            } catch (IOException err) {
+                err.printStackTrace();
+            }
+        }
+        try {
             final String regex = "\\w+\\_(\\d+)\\_(\\d+).*";
             final Pattern pattern = Pattern.compile(regex);
             final Matcher matcher = pattern.matcher(execName);
             if (matcher.find()) {
                 installPack = matcher.group(1);
                 installVer = matcher.group(2);
-            } else {
-                String execLine = ProcessHandle.current().info().commandLine().get();
-                if(execLine != null) {
-                    final Matcher matcher2 = pattern.matcher(execLine);
-                    if (matcher2.find()) {
-                        installPack = matcher.group(1);
-                        installVer = matcher.group(2);
-                    }
-                }
             }
         } catch (Exception ignored) {}
-        boolean search = false;
         installPath = Paths.get("./");
-
-        String argName = null;
         HashMap<String, String> Args = new HashMap<String, String>();
         for(String arg : args)
         {
@@ -112,7 +136,7 @@ public class Main {
         System.out.println(" |_| |_| |_|\\___/ \\__,_| .__/ \\__,_|\\___|_|\\_\\___(_)___|_| |_|");
         System.out.println("                       | |                                    ");
         System.out.println("                       |_|                                    ");
-        System.out.println("              modpacks.ch server downloader - build "+verString);
+        System.out.println(" modpacks.ch server downloader - build "+verString);
         System.out.println("");
         if(Args.containsKey("help"))
         {
