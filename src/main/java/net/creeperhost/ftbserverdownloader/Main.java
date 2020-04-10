@@ -48,14 +48,33 @@ public class Main {
         {
             installVer = args[1];
         }
-        String execName = new File(ServerPack.class.getProtectionDomain().getCodeSource().getLocation().getPath()).getName();
-        final String regex = "\\w+\\_(\\d+)\\_(\\d+).*";
-        final Pattern pattern = Pattern.compile(regex);
-        final Matcher matcher = pattern.matcher(execName);
+        String execName = "unknownInstaller";
         try {
+            File execFile = new File(Main.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+            if(execFile == null)
+            {
+                execName = ProcessHandle.current().info().command().get();
+            } else {
+                execName = execFile.getName();
+                if (execName == null) {
+                    execName = ProcessHandle.current().info().command().get();
+                }
+            }
+            final String regex = "\\w+\\_(\\d+)\\_(\\d+).*";
+            final Pattern pattern = Pattern.compile(regex);
+            final Matcher matcher = pattern.matcher(execName);
             if (matcher.find()) {
                 installPack = matcher.group(1);
                 installVer = matcher.group(2);
+            } else {
+                String execLine = ProcessHandle.current().info().commandLine().get();
+                if(execLine != null) {
+                    final Matcher matcher2 = pattern.matcher(execLine);
+                    if (matcher2.find()) {
+                        installPack = matcher.group(1);
+                        installVer = matcher.group(2);
+                    }
+                }
             }
         } catch (Exception ignored) {}
         boolean search = false;
