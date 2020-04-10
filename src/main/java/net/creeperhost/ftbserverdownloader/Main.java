@@ -130,6 +130,11 @@ public class Main {
         {
             autoInstall = (!Args.containsKey("auto"));
         }
+        if(Args.containsKey("version"))
+        {
+            System.out.println("Build " + verString);
+            System.exit(0);
+        }
         generateStart = (!Args.containsKey("noscript"));
         System.out.println("                      _                  _              _     ");
         System.out.println("                     | |                | |            | |    ");
@@ -151,6 +156,7 @@ public class Main {
             System.out.println("");
             System.out.println("Additional arguments:");
             System.out.println("--help - Print this help information.");
+            System.out.println("--version - Display the version string.");
             System.out.println("--path - Specify an install path instead of current working directory.");
             System.out.println("--auto - Automatically install a pack for filename based pack installs.");
             System.out.println("--noscript - Don't generate start.sh and start.bat files.");
