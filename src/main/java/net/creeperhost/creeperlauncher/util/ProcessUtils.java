@@ -14,7 +14,9 @@ public class ProcessUtils {
             lio = (lio > 0) ? lio+1 : lio;
             cmdline = cmdline.substring(lio);
             lio = cmdline.indexOf('\000');
-            cmdline = cmdline.substring(0, lio);
+            if(lio > 0) {
+                cmdline = cmdline.substring(0, lio);
+            }
             return cmdline;
         }
         return null;
