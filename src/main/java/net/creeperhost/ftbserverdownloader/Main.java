@@ -108,18 +108,21 @@ public class Main {
         HashMap<String, String> Args = new HashMap<String, String>();
         for(String arg : args)
         {
-            if(arg.substring(0,2).equals("--")) {
-                argName = arg.substring(2);
-                Args.put(argName, "");
-            }
-            if(argName != null)
-            {
-                if(!argName.equals(arg.substring(2))) {
-                    if (Args.containsKey(argName)) {
-                        Args.remove(argName);
+            if(arg.length() > 2) {
+                if (arg.substring(0, 2).equals("--")) {
+                    argName = arg.substring(2);
+                    Args.put(argName, "");
+                }
+                if (argName != null) {
+                    if (argName.length() > 2) {
+                        if (!argName.equals(arg.substring(2))) {
+                            if (Args.containsKey(argName)) {
+                                Args.remove(argName);
+                            }
+                            Args.put(argName, arg);
+                            argName = null;
+                        }
                     }
-                    Args.put(argName, arg);
-                    argName = null;
                 }
             }
         }
