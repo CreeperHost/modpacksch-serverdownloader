@@ -4,13 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.creeperhost.creeperlauncher.CreeperLogger;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
-import net.creeperhost.creeperlauncher.install.tasks.DownloadTask;
 import net.creeperhost.creeperlauncher.util.ProcessUtils;
 
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import java.io.*;
 import java.net.*;
 import java.net.http.HttpClient;
@@ -18,15 +14,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public class Main {
     public static AtomicLong overallBytes = new AtomicLong(0);
@@ -235,6 +228,11 @@ public class Main {
                 }
                 catch(Exception ignored){}
             }
+            if(term.substring(0,2).equals("--"))
+            {
+                System.out.println("Incorrect parameter count, please use --help for operation instructions.");
+                System.exit(-1);
+            }
             System.out.println("Searching for '"+term+"'...");
             ArrayList<CompletableFuture> futures = new ArrayList<>();
             HttpClient wclient = HttpClient.newHttpClient();
@@ -246,7 +244,17 @@ public class Main {
                     .thenAccept((String data) -> {
                         Gson gson = new Gson();
                         JsonObject apiresp = gson.fromJson(data, JsonObject.class);
+                        if(apiresp == null)
+                        {
+                            System.out.println(apiresp.get("message").getAsString());
+                            System.exit(0);
+                        }
                         JsonArray packs = apiresp.getAsJsonArray("packs");
+                        if(packs == null)
+                        {
+                            System.out.println(apiresp.get("message").getAsString());
+                            System.exit(0);
+                        }
                         for (JsonElement pack : packs) {
                             long packId = pack.getAsLong();
                             ServerPack tmp = new ServerPack(packId);
@@ -255,16 +263,19 @@ public class Main {
                                 Main.packs.add(tmp);
                             }));
                         }
+                    }).exceptionally(t -> {
+                        System.out.println("No results found.");
+                        System.exit(0);
+                        return null;
                     }).join();
             CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(
                     futures.toArray(new CompletableFuture[0])).exceptionally((t) ->
                     {
-                        t.printStackTrace();
+                        System.out.println(t.getMessage());
                         return null;
                     }
             );
             combinedFuture.join();
-
 
             int num = 1;
             System.out.println("Please choose a pack from the options below:");
@@ -483,7 +494,9 @@ public class Main {
 
     public static String getDefaultThreadLimit(String arg)
     {
-        return String.valueOf((Runtime.getRuntime().availableProcessors() / 2) - 1);
+        int ThreadLimit = (Runtime.getRuntime().availableProcessors() / 2) - 1;
+        if(ThreadLimit < 2) ThreadLimit = 2;
+        return String.valueOf(ThreadLimit);
     }
 
     private List<DownloadableFile> getRequiredDownloads(File file, File forgeLibs) throws MalformedURLException {
