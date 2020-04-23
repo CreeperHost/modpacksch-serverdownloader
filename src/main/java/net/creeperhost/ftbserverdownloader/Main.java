@@ -203,6 +203,10 @@ public class Main {
                 }
             }
             int ch = 0;
+            if(term.substring(0,2).equals("--"))
+            {
+                term = null;
+            }
             if(term == null)
             {
                 System.out.println("Please enter a search term to view modpacks (Minimum 4 characters)");
@@ -227,11 +231,6 @@ public class Main {
                     }
                 }
                 catch(Exception ignored){}
-            }
-            if(term.substring(0,2).equals("--"))
-            {
-                System.out.println("Incorrect parameter count, please use --help for operation instructions.");
-                System.exit(-1);
             }
             System.out.println("Searching for '"+term+"'...");
             ArrayList<CompletableFuture> futures = new ArrayList<>();
