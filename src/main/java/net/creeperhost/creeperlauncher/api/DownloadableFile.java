@@ -5,7 +5,7 @@ import net.creeperhost.creeperlauncher.IntegrityCheckException;
 import net.creeperhost.creeperlauncher.install.tasks.http.DownloadedFile;
 import net.creeperhost.creeperlauncher.install.tasks.http.IHttpClient;
 import net.creeperhost.creeperlauncher.install.tasks.http.OkHttpClientImpl;
-import net.creeperhost.ftbserverdownloader.Main;
+import net.creeperhost.modpackserverdownloader.Main;
 
 import java.io.File;
 import java.io.FileNotFoundException;

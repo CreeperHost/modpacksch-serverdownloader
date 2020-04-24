@@ -31,14 +31,14 @@ version = details.lastTag;
 targetCompatibility = sourceCompatibility = compileJava.sourceCompatibility = compileJava.targetCompatibility = "11"
 
 ext {
-	MAIN_CLASS = "net.creeperhost.ftbserverdownloader.Main"
+	MAIN_CLASS = "net.creeperhost.modpackserverdownloader.Main"
     MANIFEST = manifest{
 		attributes('Main-Class': MAIN_CLASS)
         attributes([
                 "Implementation-Title":     "ModpackServerDownloader",
                 "Implementation-Version":   project.version,
                 "Implementation-Vendor":    "Creeperhost LTD"
-        ] as LinkedHashMap, "net/creeperhost/ftbserverdownloader/")
+        ] as LinkedHashMap, "net/creeperhost/modpackserverdownloader/")
     }
 }
 

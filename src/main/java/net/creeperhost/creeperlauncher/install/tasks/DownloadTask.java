@@ -3,7 +3,7 @@ package net.creeperhost.creeperlauncher.install.tasks;
 import net.creeperhost.creeperlauncher.CreeperLogger;
 import net.creeperhost.creeperlauncher.IntegrityCheckException;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
-import net.creeperhost.ftbserverdownloader.Main;
+import net.creeperhost.modpackserverdownloader.Main;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;

@@ -1,4 +1,4 @@
-package net.creeperhost.ftbserverdownloader;
+package net.creeperhost.modpackserverdownloader;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
