@@ -189,6 +189,7 @@ public class ServerVersion {
             if (modloaderDownloading)
             {
                 ProcessBuilder processBuilder = new ProcessBuilder().command("java", "-jar", Main.installPath.resolve(installerFileName).toAbsolutePath().toString(), "--installServer", Main.installPath.toAbsolutePath().toString());
+                processBuilder.directory(Main.installPath.toFile());
                 processBuilder.inheritIO();
                 boolean error = false;
                 try {
