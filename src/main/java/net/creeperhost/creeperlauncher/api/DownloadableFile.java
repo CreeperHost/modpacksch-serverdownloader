@@ -67,7 +67,6 @@ public class DownloadableFile
     public void prepare() throws IOException
     {
         if (client == null) client = new OkHttpClientImpl();
-        if (this.downloadUrl == null) this.downloadUrl = this.url.toString();
         try
         {
             this.url = new URL(this.downloadUrl.replace(" ", "%20"));
@@ -84,20 +83,36 @@ public class DownloadableFile
             connection.setReadTimeout(25000);
             connection.connect();
             //Grab the new origin header
-            String origin = connection.getHeaderField("origin");
-            if(origin != null && origin.length() > 0)
+            int tmpContentLength = 0;
+            boolean pokeOrigin = true;
+            try {
+                tmpContentLength = connection.getContentLength();
+                if(tmpContentLength > 0)
+                {
+                    //We've managed to get the content length from the cdn!
+                    pokeOrigin = false;
+                }
+            } catch (Exception ignored)
             {
-                //If we have an origin header, let's grab the file size from the horses mouth
-                connection.disconnect();
-                URL _url = new URL(origin.replace(" ", "%20"));
-                connection = (HttpURLConnection) _url.openConnection();
-                connection.setRequestMethod("HEAD");
-                connection.setConnectTimeout(15000);
-                connection.setReadTimeout(25000);
-                connection.connect();
+                pokeOrigin = true;
             }
-            remoteSize = connection.getContentLength();
-            remoteExists = ((connection.getResponseCode() == 200) && (connection.getContentLength() >= 0));
+            if(pokeOrigin) {
+                //cdn is not giving us content length due to gzip(?), let's go poke the origin of the files.
+                String origin = connection.getHeaderField("origin");
+                if (origin != null && origin.length() > 0) {
+                    //If we have an origin header, let's grab the file size from the horses mouth
+                    connection.disconnect();
+                    URL _url = new URL(origin.replace(" ", "%20"));
+                    connection = (HttpURLConnection) _url.openConnection();
+                    connection.setRequestMethod("HEAD");
+                    connection.setConnectTimeout(15000);
+                    connection.setReadTimeout(25000);
+                    connection.connect();
+                    tmpContentLength = connection.getContentLength();
+                }
+            }
+            remoteSize = tmpContentLength;
+            remoteExists = ((connection.getResponseCode() == 200) && (tmpContentLength >= 0));
             if(!remoteExists)
             {
                 if(connection.getResponseCode() == 200)
@@ -115,11 +130,11 @@ public class DownloadableFile
         {
             if (this.getSize() > 0)
             {
-                Main.overallBytes.set(Main.overallBytes.get() - this.getSize());
+               // FTBModPackInstallerTask.overallBytes.set(FTBModPackInstallerTask.overallBytes.get() - this.getSize());
                 CreeperLogger.INSTANCE.warning(this.getName() + " size expected does not match remote file size. File size updated.");
             }
             this.size = remoteSize;
-            Main.overallBytes.addAndGet(this.getSize());
+            //FTBModPackInstallerTask.overallBytes.addAndGet(this.getSize());
         }
         if (!remoteExists)
         {
@@ -127,6 +142,7 @@ public class DownloadableFile
         }
         this.hasPrepared = true;
     }
+
 
     public void download(Path destination, boolean OverwriteOnExist, boolean FailOnExist) throws Throwable
     {
