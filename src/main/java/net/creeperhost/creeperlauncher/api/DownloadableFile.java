@@ -130,11 +130,11 @@ public class DownloadableFile
         {
             if (this.getSize() > 0)
             {
-               // FTBModPackInstallerTask.overallBytes.set(FTBModPackInstallerTask.overallBytes.get() - this.getSize());
+                Main.overallBytes.set(Main.overallBytes.get() - this.getSize());
                 CreeperLogger.INSTANCE.warning(this.getName() + " size expected does not match remote file size. File size updated.");
             }
             this.size = remoteSize;
-            //FTBModPackInstallerTask.overallBytes.addAndGet(this.getSize());
+            Main.overallBytes.addAndGet(this.getSize());
         }
         if (!remoteExists)
         {
