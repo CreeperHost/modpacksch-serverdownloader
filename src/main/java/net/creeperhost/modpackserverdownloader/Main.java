@@ -139,7 +139,7 @@ public class Main {
         System.out.println("                       |_|                                    ");
         System.out.println(" modpacks.ch server downloader - build "+verString);
         System.out.println("");
-        if(Args.containsKey("help")||args.length < 2)
+        if(Args.containsKey("help")||(args.length < 2 && installPack == null && installVer == null))
         {
             System.out.println("Usage:");
             System.out.println(execName+" - Start an interactive download and install.");
