@@ -112,7 +112,7 @@ public class DownloadableFile
                 }
             }
             remoteSize = tmpContentLength;
-            remoteExists = ((connection.getResponseCode() == 200) && (tmpContentLength >= 0));
+            remoteExists = (connection.getResponseCode() == 200);
             if(!remoteExists)
             {
                 if(connection.getResponseCode() == 200)
