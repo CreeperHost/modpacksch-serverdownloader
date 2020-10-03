@@ -15,6 +15,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 
@@ -225,6 +226,9 @@ public class ServerVersion {
             }
             if (Main.installPath.resolveSibling("forge-" + Vanilla + "-" + Modloader + "-universal.jar").toFile().exists()) {
                 forgeJar = "forge-" + Vanilla + "-" + Modloader + "-universal.jar";
+            }
+            if (!Path.of(forgeJar).toFile().exists()) {
+                System.out.println("Cannot find resolved forge jar for vanilla: " + Vanilla + " Modloader: " + Modloader );
             }
             String startCmd = "-server -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx" + this.recommendRam + "M -Xms" + this.minimumRam + "M -jar "+forgeJar+" nogui";
             File bash = new File(Main.installPath.resolve("start.sh").toAbsolutePath().toString());
