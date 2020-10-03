@@ -230,10 +230,27 @@ public class ServerVersion {
             File bash = new File(Main.installPath.resolve("start.sh").toAbsolutePath().toString());
             try {
                 if (bash.createNewFile()) {
-                    String bashFile = "#!/bin/bash\necho \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\nEULA=`read  -n 1 -p \"[y/n] \"`\nif [ \"$EULA\" = \"y\" ]; then\n    echo \"eula=true\" > eula.txt\nfi\njava "+startCmd;
+                    String bashFile = "" +
+                            "#!/bin/bash\n" +
+                            "if [ -r eula.txt ] && grep -qF eula=true eula.txt ; then\n" +
+                            "    echo \"EULA already accepted. Starting Minecraft...\"\n" +
+                            "else\n" +
+                            "    echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n" +
+                            "    read -r -p \"[y/n] \" EULA\n" +
+                            "    if [ \"$EULA\" = \"y\" ]; then\n" +
+                            "        echo \"eula=true\" > eula.txt\n" +
+                            "    fi\n" +
+                            "fi\n" +
+                            "java " + startCmd + "\n" +
+                            "if [ 0 -ne $? ] ; then\n" +
+                            "    echo 'Failed. Printing some information for toubleshooting...'\n" +
+                            "    java -version\n" +
+                            "fi\n" +
+                            "read -r -n 1 -p \"Press any key to exit\"";
                     FileWriter bashWriter = new FileWriter(bash.toPath().toAbsolutePath().toString());
                     bashWriter.write(bashFile);
                     bashWriter.close();
+                    bash.setExecutable(true, true);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -241,7 +258,25 @@ public class ServerVersion {
             File batch = new File(Main.installPath.resolve("start.bat").toAbsolutePath().toString());
             try {
                 if (batch.createNewFile()) {
-                    String batchFile = "@echo off\r\necho \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\r\nset /p EULA=[y/n]\r\nIF /I \"%EULA%\" NEQ \"y\" GOTO END\r\necho eula=true>eula.txt\r\n:END\r\njava.exe "+startCmd;
+                    // BatCodeCheck displays false warning for indented echo lines and warning about /p is harmless because reading only one character
+                    String batchFile = "" +
+                            "@echo off\r\n" +
+                            "find \"eula=true\" eula.txt 1 > NUL 2>&1\r\n" +
+                            "if %ERRORLEVEL% EQU 0 (\r\n" +
+                            "   echo \"EULA already accepted. Starting Minecraft...\"\r\n" +
+                            "   GOTO END\r\n" +
+                            ")\r\n" +
+                            "echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\r\n" +
+                            "set /p EULA=[y/n]\r\n" +
+                            "IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
+                            "echo eula=true>eula.txt\r\n" +
+                            ":END\r\n" +
+                            "java.exe " + startCmd + "\r\n" +
+                            "if %ERRORLEVEL% NEQ 0 (\r\n" +
+                            "   echo \"Failed. Printing some information for toubleshooting...\"\r\n" +
+                            "   java -version\r\n" +
+                            ")\r\n" +
+                            "pause\r\n";
                     FileWriter batchWriter = new FileWriter(batch.toPath().toAbsolutePath().toString());
                     batchWriter.write(batchFile);
                     batchWriter.close();
