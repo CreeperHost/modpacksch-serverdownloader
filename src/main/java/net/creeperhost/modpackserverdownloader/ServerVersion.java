@@ -157,7 +157,7 @@ public class ServerVersion {
                         System.out.println("[" + Main.dlnum.get() + "/" + files.size() + "] Unable to download: " + throwable.getMessage());
                         throwable.printStackTrace();
                     }
-                }).thenRunAsync(() -> {
+                }, Main.downloadExecutor).thenRunAsync(() -> {
                     System.out.println("[" + Main.dlnum.incrementAndGet() + "/" + files.size() + "] Downloaded '" + downloadableFile.getName() + "' to '" + downloadableFile.getPath() + "' [" + downloadableFile.getSize() + " bytes]...");
                 }));
             }

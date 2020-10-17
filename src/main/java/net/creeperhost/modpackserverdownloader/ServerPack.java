@@ -45,7 +45,7 @@ public class ServerPack {
                         ServerVersion tmp = new ServerVersion(this.id, versionId);
                         futures.add(CompletableFuture.runAsync(() -> {
                             tmp.downloadManifest();
-                        }));
+                        }, Main.downloadExecutor));
                         this.versions.add(tmp);
                     }
                 }).join();

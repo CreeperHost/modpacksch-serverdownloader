@@ -16,6 +16,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
@@ -25,6 +27,7 @@ public class Main {
     public static AtomicLong overallBytes = new AtomicLong(0);
     public static AtomicLong currentBytes = new AtomicLong(0);
     public static AtomicInteger dlnum = new AtomicInteger();
+    public static Executor downloadExecutor = Executors.newWorkStealingPool();
     public static Path installPath;
     public static String verString = "@VERSION@";
     public static boolean generateStart = true;
@@ -260,7 +263,7 @@ public class Main {
                             futures.add(CompletableFuture.runAsync(() -> {
                                 tmp.downloadManifest();
                                 Main.packs.add(tmp);
-                            }));
+                            }, downloadExecutor));
                         }
                     }).exceptionally(t -> {
                         System.out.println("No results found.");

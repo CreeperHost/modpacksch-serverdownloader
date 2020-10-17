@@ -17,7 +17,6 @@ public class DownloadTask implements IInstallTask
     private boolean checksumComplete;
     private String sha1;
     static int nThreads = Integer.parseInt(Main.getDefaultThreadLimit(""));
-    private static final Executor threadPool = new ThreadPoolExecutor(nThreads, nThreads, 60L, TimeUnit.SECONDS, new LinkedBlockingQueue<>());
     private int tries = 0;
     private final DownloadableFile file;
 
@@ -115,7 +114,7 @@ public class DownloadTask implements IInstallTask
                     }
                 }
             }
-        }, threadPool);
+        }, Main.downloadExecutor);
 
     }
 
