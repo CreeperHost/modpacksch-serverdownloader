@@ -5,18 +5,21 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.creeperhost.creeperlauncher.api.DownloadableFile;
+import net.creeperhost.creeperlauncher.install.tasks.http.OkHttpClientImpl;
 import net.creeperhost.creeperlauncher.util.FileUtils;
 import net.creeperhost.creeperlauncher.util.MiscUtils;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.ref.WeakReference;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ServerVersion {
     public long id;
@@ -134,8 +137,10 @@ public class ServerVersion {
         FileUtils.deleteDirectory(resources);
         FileUtils.deleteDirectory(scripts);
 
+        int maxFiles = files.size();
 
-        ArrayList<String> directories = new ArrayList<String>();
+        DownloadableFile.client = new OkHttpClientImpl(); // initialise prior to actually starting as otherwise due to threads it could be done multiple times
+
         for(DownloadableFile downloadableFile : files) {
             if (!downloadableFile.getClientOnly()) {
                 //Just feels too dangerous in case someone makes a mistake in the db.
@@ -149,19 +154,26 @@ public class ServerVersion {
                         }
                     }
                 }*/
+                final AtomicReference<DownloadableFile> tempFile = new AtomicReference<>(downloadableFile); // we do this so that we can null it later to save ram when we're fully done with it
                 futures.add(CompletableFuture.runAsync(() -> {
                     try {
-                        downloadableFile.prepare();
-                        downloadableFile.download(Main.installPath.resolve(downloadableFile.getPath()).resolve(downloadableFile.getName()), true, false);
+                        DownloadableFile fileObj = tempFile.get();
+                        if (fileObj != null) { // will never not be null, but to stop IDE bitching
+                            fileObj.prepare();
+                            fileObj.download(Main.installPath.resolve(downloadableFile.getPath()).resolve(downloadableFile.getName()), true, false);
+                        }
                     } catch (Throwable throwable) {
-                        System.out.println("[" + Main.dlnum.get() + "/" + files.size() + "] Unable to download: " + throwable.getMessage());
+                        System.out.println("[" + Main.dlnum.get() + "/" + maxFiles + "] Unable to download: " + throwable.getMessage());
                         throwable.printStackTrace();
                     }
                 }, Main.downloadExecutor).thenRunAsync(() -> {
-                    System.out.println("[" + Main.dlnum.incrementAndGet() + "/" + files.size() + "] Downloaded '" + downloadableFile.getName() + "' to '" + downloadableFile.getPath() + "' [" + downloadableFile.getSize() + " bytes]...");
+                    System.out.println("[" + Main.dlnum.incrementAndGet() + "/" + maxFiles + "] Downloaded '" + downloadableFile.getName() + "' to '" + downloadableFile.getPath() + "' [" + downloadableFile.getSize() + " bytes]...");
+                    tempFile.lazySet(null);
                 }));
             }
         }
+
+        files = null; // allow GC to collect files already downloaded
 
         CompletableFuture<Void> combinedFuture = CompletableFuture.allOf(
                 futures.toArray(new CompletableFuture[0])).exceptionally((t) ->
@@ -172,7 +184,7 @@ public class ServerVersion {
         );
         combinedFuture.join();
 
-        System.out.println("["+Main.dlnum.get()+"/"+files.size()+"] Finished.");
+        System.out.println("["+Main.dlnum.get()+"/"+maxFiles+"] Finished.");
         try {
             HttpClient wclient = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()

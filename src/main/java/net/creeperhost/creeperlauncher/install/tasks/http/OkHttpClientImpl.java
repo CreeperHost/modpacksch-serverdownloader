@@ -51,8 +51,6 @@ public class OkHttpClientImpl implements IHttpClient
         return null;
     }
 
-    byte[] tempBytes = new byte[8192];
-
     /* returns when done */
     @Override
     public DownloadedFile doDownload(String url, Path destination, IProgressUpdater progressWatcher, MessageDigest digest, long maxSpeed) throws IOException
@@ -87,8 +85,10 @@ public class OkHttpClientImpl implements IHttpClient
         }
 
         BufferedSink sink = Okio.buffer(Okio.sink(destination.toFile()));
-        sink.writeAll(response.body().source());
+        BufferedSource source = response.body().source();
+        sink.writeAll(source);
         sink.close();
+        source.close();
 
         response.close();
 

@@ -40,7 +40,7 @@ public class DownloadableFile
     MessageDigest digest;
     String sha1;
     File destination;
-    private IHttpClient client;
+    public static IHttpClient client;
 
     public DownloadableFile(String version, String path, String url, List<String> acceptedChecksums, long size, boolean clientSide, boolean optional, long id, String name, String type, String updated)
     {
