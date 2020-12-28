@@ -221,26 +221,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJsonFG3{}
 		err := json.Unmarshal(rawForgeJSON, &versionForge); if err == nil {
-			mirrors := GetMirrors()
-			for _, v := range versionForge.Libraries {
-				artichoke := v.Download.Artifact
-				if len(artichoke.Url) > 0 {
-					dir, file := path.Split(artichoke.Path)
-					actualUrlStr := ""
-					Out:
-					for _, mirror := range mirrors {
-						actualUrlStr = strings.Replace(artichoke.Url, "https://files.minecraftforge.net/maven/", mirror, 1)
-						if FileOnServer(actualUrlStr) {
-							break Out
-						}
-					}
-					actualUrl, err := url.Parse(actualUrlStr)
-					if err != nil {
-						continue
-					}
-					downloads = append(downloads, Download{"libraries/" + dir, *actualUrl, file, artichoke.SHA1})
-				}
-			}
+			downloads = append(downloads, versionForge.GetDownloads()...)
 		}
 	}
 	vanillaVer, err := f.Version.Minecraft.GetVanillaVersion()
@@ -342,6 +323,31 @@ func (v* VersionLibrary) UnmarshalJSON(data []byte) error {
 
 type VersionJsonFG3 struct {
 	Libraries []VersionLibraryFG3
+}
+
+func (v VersionJsonFG3) GetDownloads() []Download {
+	mirrors := GetMirrors()
+	var downloads []Download
+	for _, library := range v.Libraries {
+		artichoke := library.Download.Artifact
+		if len(artichoke.Url) > 0 {
+			dir, file := path.Split(artichoke.Path)
+			actualUrlStr := ""
+		Out:
+			for _, mirror := range mirrors {
+				actualUrlStr = strings.Replace(artichoke.Url, "https://files.minecraftforge.net/maven/", mirror, 1)
+				if FileOnServer(actualUrlStr) {
+					break Out
+				}
+			}
+			actualUrl, err := url.Parse(actualUrlStr)
+			if err != nil {
+				continue
+			}
+			downloads = append(downloads, Download{"libraries/" + dir, *actualUrl, file, artichoke.SHA1})
+		}
+	}
+	return downloads
 }
 
 type VersionLibraryFG3 struct {

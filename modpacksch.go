@@ -1,6 +1,13 @@
 package main
 
-import "net/url"
+import (
+	"errors"
+	"net/url"
+)
+
+type APIFunctions interface {
+	GetError() error
+}
 
 type APIResponse struct {
 	Status  string `json:"status"`
@@ -10,6 +17,13 @@ type APIResponse struct {
 type SearchResult struct {
 	*APIResponse
 	PackIDs []int `json:"packs"`
+}
+
+func (resp APIResponse) GetError() error {
+	if resp.Status == "error" {
+		return errors.New(resp.Message)
+	}
+	return nil
 }
 
 type Modpack struct {

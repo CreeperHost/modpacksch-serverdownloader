@@ -16,6 +16,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strconv"
 	"time"
 )
@@ -29,8 +30,16 @@ var (
 	inProgress = 0
 	succeeded = 0
 	failed = 0
-	parsedArgs = make(map[string]interface{})
 )
+
+var Options struct {
+	auto bool
+	path string
+	startScript bool
+	help bool
+	threads int
+}
+
 
 /*func initWindows() {
 	mode := uint32(0)
@@ -46,21 +55,22 @@ func main() {
 	//initWindows() // todo: more work on making it look nice and work properly, and avoid doing it unless windows 10
 	filename := filepath.Base(os.Args[0])
 	filename = "serverinstall_61_191"
-	var (
-		auto = false
-		tempPath = ""
-		startScript = false
-		help = false
-	)
-	flag.BoolVar(&auto, "auto", auto, "Ask no questions, use defaults.")
-	flag.StringVar(&tempPath, "path", tempPath, "Directory to install in. Default: current `directory`")
-	flag.BoolVar(&startScript, "startScript", startScript, "Generate a start script using specifications. Default: false")
-	flag.BoolVar(&help,"help", help, "This help screen")
+
+	Options.auto = false
+	Options.path = ""
+	Options.startScript = false
+	Options.threads = runtime.NumCPU() * 2
+	Options.help = false
+
+
+	flag.BoolVar(&Options.auto, "auto", Options.auto, "Ask no questions, use defaults.")
+	flag.StringVar(&Options.path, "path", Options.path, "Directory to install in. Default: current `directory`")
+	flag.BoolVar(&Options.startScript, "startScript", Options.startScript, "Generate a start script using specifications. Default: false")
+	flag.BoolVar(&Options.help,"help", Options.help, "This help screen")
+	flag.IntVar(&Options.threads, "threads", Options.threads, "Number of threads to use for downloading. Default: cpucores * 2")
 	flag.Parse()
-	parsedArgs["auto"] = auto
-	parsedArgs["path"] = tempPath
-	parsedArgs["startScript"] = startScript
-	if help {
+
+	if Options.help {
 		flag.Usage()
 		os.Exit(0)
 	}
@@ -75,7 +85,7 @@ func main() {
 }*/
 
 func HandleLaunch(file string) {
-	var installPath = parsedArgs["path"].(string)
+	var installPath = Options.path
 	if len(installPath) == 0 {
 		response := QuestionFree("current directory", "Where would you like to install the server?")
 		if response != "current directory" {
@@ -98,19 +108,19 @@ func HandleLaunch(file string) {
 	}
 	_ = upgrade // temp
 
-	err, modpackid, versionid := ParseFilename(file)
+	err, modpackId, versionId := ParseFilename(file)
 
 	if err != nil {
 		log.Fatalf("Cannot locate modpack via filename %v", err)
 	}
 
-	err, modpack := GetModpack(modpackid)
+	err, modpack := GetModpack(modpackId)
 	if err != nil {
 		log.Fatalf("Error fetching modpack: %v", err)
 	}
 
 
-	err, versionInfo := modpack.GetVersion(versionid)
+	err, versionInfo := modpack.GetVersion(versionId)
 	if err != nil {
 		log.Fatalf("Error fetching modpack: %v", err)
 	}
@@ -127,7 +137,7 @@ func HandleLaunch(file string) {
 
 	downloads = append(downloads, modLoaderDls...)
 
-	grabs, err := GetBatch(64, installPath, downloads...)
+	grabs, err := GetBatch(Options.threads, installPath, downloads...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -169,40 +179,33 @@ func HandleLaunch(file string) {
 func ParseFilename(file string) (error, int, int) {
 	re := regexp.MustCompile("^serverinstall_(\\d+)_(\\d+)")
 	matched := re.FindStringSubmatch(file)
-	modpackid, err := strconv.Atoi(matched[1])
+	modpackId, err := strconv.Atoi(matched[1])
 	if err != nil {
 		return errors.New("unable to parse filename: " + file), -1, -1
 	}
-	versionid, err := strconv.Atoi(matched[2])
+	versionId, err := strconv.Atoi(matched[2])
 	if err != nil {
 		return errors.New("unable to parse filename: " + file), -1, -1
 	}
-	return nil, modpackid, versionid
+	return nil, modpackId, versionId
 }
 
 func GetModpack(id int) (error, Modpack) {
 	ret := Modpack{}
-	newurl := fmt.Sprintf(BaseModpackURL+"%d", id)
-	err, newmodpack := APICall(newurl)
+	newUrl := fmt.Sprintf(BaseModpackURL+"%d", id)
+	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
 	}
-	err = json.Unmarshal(newmodpack, &ret)
-	if err != nil {
-		return err, ret
-	}
-	if ret.Status == "error" {
-		return errors.New(ret.Message), ret
-	}
-	return nil, ret
+	return ret.GetError(), ret
 }
 
-func (m Modpack) GetVersion(versionid int) (error, VersionInfo) {
-	ret := VersionInfo{}
+func (m Modpack) GetVersion(versionId int) (error, VersionInfo) {
 	var version *Version
+	var ret VersionInfo
 	Free:
 	for _, v := range m.Versions {
-		if v.ID == versionid {
+		if v.ID == versionId {
 			version = &v
 			break Free
 		}
@@ -212,19 +215,12 @@ func (m Modpack) GetVersion(versionid int) (error, VersionInfo) {
 	}
 
 	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", m.ID, version.ID)
-	err, resp := APICall(newUrl)
-	if err != nil {
-		return err, ret
-	}
-	err = json.Unmarshal(resp, &ret)
+	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
 	}
 
-	if ret.Status == "error" {
-		return errors.New(ret.Message), ret
-	}
-	return nil, ret
+	return ret.GetError(), ret
 }
 
 func (v VersionInfo) GetDownloads() []Download {
@@ -238,19 +234,19 @@ func (v VersionInfo) GetDownloads() []Download {
 			//shrug
 			continue
 		}
-		downloads = append(downloads, Download{f.Path, *parse, v.Name, f.SHA1})
+		downloads = append(downloads, Download{f.Path, *parse, f.Name, f.SHA1})
 	}
 	return downloads
 }
 
 func (v VersionInfo) GetModLoader() (error, ModLoader) {
 	var ret ModLoader
-	var modloader Target
+	var modLoader Target
 	var minecraftTar Target
 
 	for _, target := range v.Targets {
 		if target.Type == "modloader" {
-			modloader = target
+			modLoader = target
 		}
 		if target.Type == "game" {
 			minecraftTar = target
@@ -262,35 +258,41 @@ func (v VersionInfo) GetModLoader() (error, ModLoader) {
 		log.Fatalf("Error parsing Version: %v", err)
 	}
 
-	if modloader.Name == "forge" {
-		return GetForge(modloader, mc)
+	if modLoader.Name == "forge" {
+		return GetForge(modLoader, mc)
 	}
-	return errors.New(fmt.Sprintf("Unable to locate modloader for %s %s %s", modloader.Name, modloader.Version, mc.RawVersion)), ret
+	return errors.New(fmt.Sprintf("Unable to locate Mod Loader for %s %s %s", modLoader.Name, modLoader.Version, mc.RawVersion)), ret
 }
 
-func APICall(url string) (error, []byte) {
+func APICall(url string, val interface{}) error {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return err, nil
+		return err
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return err, nil
+		return err
 	}
 
 	stringRet, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-		return err, nil
+		return err
 	}
 
 	resp.Body.Close()
 
-	return nil, stringRet
+	err = json.Unmarshal(stringRet, &val)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func GetBatch(workers int, dst string, urlStrs ...Download) (<-chan *grab.Response, error) {
+func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Response, error) {
 	fi, err := os.Stat(dst)
 	if err != nil {
 		return nil, err
@@ -299,14 +301,14 @@ func GetBatch(workers int, dst string, urlStrs ...Download) (<-chan *grab.Respon
 		return nil, fmt.Errorf("destination is not a directory")
 	}
 
-	reqs := make([]*grab.Request, len(urlStrs))
-	for i := 0; i < len(urlStrs); i++ {
-		req, err := grab.NewRequest(path.Join(dst, urlStrs[i].Path, urlStrs[i].Name), urlStrs[i].URL.String())
+	reqs := make([]*grab.Request, len(downloads))
+	for i := 0; i < len(downloads); i++ {
+		req, err := grab.NewRequest(path.Join(dst, downloads[i].Path, downloads[i].Name), downloads[i].URL.String())
 		if err != nil {
 			return nil, err
 		}
-		if len(urlStrs[i].SHA1) > 0 {
-			byteHex, _ := hex.DecodeString(urlStrs[i].SHA1)
+		if len(downloads[i].SHA1) > 0 {
+			byteHex, _ := hex.DecodeString(downloads[i].SHA1)
 			req.SetChecksum(crypto.SHA1.New(), byteHex, false)
 		}
 
