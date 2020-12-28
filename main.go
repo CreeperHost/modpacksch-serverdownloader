@@ -4,6 +4,7 @@ import (
 	"crypto"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"github.com/cavaliercoder/grab"
@@ -92,82 +93,39 @@ func HandleLaunch(file string) {
 		}
 	}
 	upgrade := false
-	if _, err := os.Stat(path.Join(installPath, "Version.json")); !os.IsNotExist(err) {
+	if _, err := os.Stat(path.Join(installPath, "version.json")); !os.IsNotExist(err) {
 		upgrade = true
 	}
 	_ = upgrade // temp
-	re := regexp.MustCompile("^serverinstall_(\\d+)_(\\d+)")
-	matched := re.FindStringSubmatch(file)
-	modpackid, err := strconv.Atoi(matched[1])
+
+	err, modpackid, versionid := ParseFilename(file)
+
 	if err != nil {
-		log.Fatalf("Cannot locate modpack via filename: %s", file)
+		log.Fatalf("Cannot locate modpack via filename %v", err)
 	}
-	versionid, err := strconv.Atoi(matched[2])
+
+	err, modpack := GetModpack(modpackid)
 	if err != nil {
-		log.Fatalf("Cannot locate modpack via filename: %s", file)
-	}
-	modpack := GetModpack(modpackid)
-	if modpack.Status == "error" {
-		log.Fatalf("Error fetching modpack: %s", modpack.Message)
-	}
-	var version *Version
-	Free:
-	for _, v := range modpack.Versions {
-		if v.ID == versionid {
-			version = &v
-			break Free
-		}
-	}
-	if version == nil {
-		log.Fatalf("Error fetching modpack: %s", "Version does not exist")
+		log.Fatalf("Error fetching modpack: %v", err)
 	}
 
-	versionInfo := GetVersion(modpack, *version)
-	if versionInfo.Status == "error" {
-		log.Fatalf("Error fetching modpack: %s", modpack.Message)
+
+	err, versionInfo := modpack.GetVersion(versionid)
+	if err != nil {
+		log.Fatalf("Error fetching modpack: %v", err)
 	}
 
-	var downloads []Download
+	downloads := versionInfo.GetDownloads()
 
-	for _, v := range versionInfo.Files {
-		if v.ClientOnly {
-			continue
-		}
-		parse, err := url.Parse(v.URL)
-		if err != nil {
-			//shrug
-			continue
-		}
-		downloads = append(downloads, Download{v.Path, *parse, v.Name, v.SHA1})
-	}
-
-	var modloader Target
-	var minecraftTar Target
-
-	for _, v := range versionInfo.Targets {
-		if v.Type == "modloader" {
-			modloader = v
-		}
-		if v.Type == "game" {
-			minecraftTar = v
-		}
-	}
-
-	minecraft := Minecraft{}
-	minecraft.RawVersion = minecraftTar.Version
-	if err := minecraft.Parse(); err != nil {
-		log.Fatalf("Error parsing Version: %v", err)
-	}
-
-	err, ml := GetModloader(modloader, minecraft)
+	err, ml := versionInfo.GetModLoader()
 
 	if err != nil {
 		log.Fatalf("Error getting Modloader: %v", err)
 	}
 
-	modloaderDls := ml.GetDownloads(installPath)
+	modLoaderDls := ml.GetDownloads(installPath)
 
-	downloads = append(downloads, modloaderDls...)
+	downloads = append(downloads, modLoaderDls...)
 
 	grabs, err := GetBatch(64, installPath, downloads...)
 	if err != nil {
@@ -208,43 +166,106 @@ func HandleLaunch(file string) {
 	os.Exit(failed)
 }
 
-func GetModpack(id int) Modpack {
-	modpack := Modpack{}
+func ParseFilename(file string) (error, int, int) {
+	re := regexp.MustCompile("^serverinstall_(\\d+)_(\\d+)")
+	matched := re.FindStringSubmatch(file)
+	modpackid, err := strconv.Atoi(matched[1])
+	if err != nil {
+		return errors.New("unable to parse filename: " + file), -1, -1
+	}
+	versionid, err := strconv.Atoi(matched[2])
+	if err != nil {
+		return errors.New("unable to parse filename: " + file), -1, -1
+	}
+	return nil, modpackid, versionid
+}
+
+func GetModpack(id int) (error, Modpack) {
+	ret := Modpack{}
 	newurl := fmt.Sprintf(BaseModpackURL+"%d", id)
 	err, newmodpack := APICall(newurl)
 	if err != nil {
-		modpack := Modpack{}
-		modpack.Status = "error"
-		modpack.Message = err.Error()
-		return modpack
+		return err, ret
 	}
-	err = json.Unmarshal(newmodpack, &modpack)
+	err = json.Unmarshal(newmodpack, &ret)
 	if err != nil {
-		modpack := Modpack{}
-		modpack.Status = "error"
-		modpack.Message = err.Error()
-		return modpack
+		return err, ret
 	}
-	return modpack
+	if ret.Status == "error" {
+		return errors.New(ret.Message), ret
+	}
+	return nil, ret
 }
 
-func GetVersion(modpack Modpack, version Version) VersionInfo {
-	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", modpack.ID, version.ID)
+func (m Modpack) GetVersion(versionid int) (error, VersionInfo) {
+	ret := VersionInfo{}
+	var version *Version
+	Free:
+	for _, v := range m.Versions {
+		if v.ID == versionid {
+			version = &v
+			break Free
+		}
+	}
+	if version == nil {
+		return errors.New("version does not exist"), ret
+	}
+
+	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", m.ID, version.ID)
 	err, resp := APICall(newUrl)
-	newversion := VersionInfo{}
 	if err != nil {
-		newversion.Status = "error"
-		newversion.Message = err.Error()
-		return newversion
+		return err, ret
 	}
-	err = json.Unmarshal(resp, &newversion)
+	err = json.Unmarshal(resp, &ret)
 	if err != nil {
-		newversion = VersionInfo{}
-		newversion.Status = "error"
-		newversion.Message = err.Error()
-		return newversion
+		return err, ret
 	}
-	return newversion
+
+	if ret.Status == "error" {
+		return errors.New(ret.Message), ret
+	}
+	return nil, ret
+}
+
+func (v VersionInfo) GetDownloads() []Download {
+	var downloads []Download
+	for _, f := range v.Files {
+		if f.ClientOnly {
+			continue
+		}
+		parse, err := url.Parse(f.URL)
+		if err != nil {
+			//shrug
+			continue
+		}
+		downloads = append(downloads, Download{f.Path, *parse, v.Name, f.SHA1})
+	}
+	return downloads
+}
+
+func (v VersionInfo) GetModLoader() (error, ModLoader) {
+	var ret ModLoader
+	var modloader Target
+	var minecraftTar Target
+
+	for _, target := range v.Targets {
+		if target.Type == "modloader" {
+			modloader = target
+		}
+		if target.Type == "game" {
+			minecraftTar = target
+		}
+	}
+	mc := Minecraft{}
+	mc.RawVersion = minecraftTar.Version
+	if err := mc.Parse(); err != nil {
+		log.Fatalf("Error parsing Version: %v", err)
+	}
+
+	if modloader.Name == "forge" {
+		return GetForge(modloader, mc)
+	}
+	return errors.New(fmt.Sprintf("Unable to locate modloader for %s %s %s", modloader.Name, modloader.Version, mc.RawVersion)), ret
 }
 
 func APICall(url string) (error, []byte) {

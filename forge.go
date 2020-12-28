@@ -32,11 +32,6 @@ func GetForge(modloader Target, mc Minecraft) (error, ModLoader) {
 	return nil, ForgeInJar{version}
 }
 
-type ModLoaderInfo struct {
-	MCVersion string
-	Version string
-}
-
 type ForgeVersion struct {
 	RawVersion string
 	Major int
@@ -131,26 +126,9 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJson{}
 		err := json.Unmarshal(rawForgeJSON, &versionForge); if err == nil {
-			for _, v := range versionForge.Libraries {
-				v.Parse()
-				if err != nil {
-					continue
-				}
-				artichoke := v
-				dir, file := artichoke.Path, artichoke.Filename
-				if artichoke.Url == "" {
-					continue
-				}
-				actualUrl, err := url.Parse(artichoke.Url)
-				if err != nil {
-					continue;
-				}
-				hash := ""
-				if len(artichoke.Hashes) > 0 {
-					hash = artichoke.Hashes[0]
-				}
-				downloads = append(downloads, Download{"libraries/" + dir, *actualUrl, file, hash})
-			}
+			downloads = append(downloads, versionForge.GetLibraryDownloads()...)
+		} else {
+			log.Fatalf("Cannot get a json to download the libraries which is required: %v", err)
 		}
 	} else {
 		log.Fatalf("Cannot get a json to download the libraries which is required.")
@@ -312,6 +290,27 @@ type VersionJson struct {
 	Libraries []VersionLibrary
 }
 
+func (v VersionJson) GetLibraryDownloads() []Download {
+	var downloads []Download
+	for _, library := range v.Libraries {
+		artichoke := library
+		dir, file := artichoke.Path, artichoke.Filename
+		if artichoke.Url == "" {
+			continue
+		}
+		actualUrl, err := url.Parse(artichoke.Url)
+		if err != nil {
+			continue
+		}
+		hash := ""
+		if len(artichoke.Hashes) > 0 {
+			hash = artichoke.Hashes[0]
+		}
+		downloads = append(downloads, Download{"libraries/" + dir, *actualUrl, file, hash})
+	}
+	return downloads
+}
+
 type VersionLibrary struct {
 	Name     string `json:"name"`
 	Server   bool `json:"serverreq"`
@@ -322,20 +321,23 @@ type VersionLibrary struct {
 	Filename string
 }
 
-func (v* VersionLibrary) Parse() { // Could use a custom unmarshaller for this, but eh
+func (v* VersionLibrary) UnmarshalJSON(data []byte) error {
+	type versionlibrary2 VersionLibrary
+	if err := json.Unmarshal(data, (*versionlibrary2)(v)); err != nil {
+		return err
+	}
 	split := strings.Split(v.Name, ":")
 	v.Url = ""
 	if split[1] == "minecraftforge" {
-		return
+		return nil
 	}
 	filename := split[1] + "-" + split[2] + ".jar"
 	pathTemp := strings.Replace(split[0], ".", "/", -1) + "/" + split[1] + "/" + split[2]
 
-
-
 	v.Url = GetMirrorFor(pathTemp + "/" + filename)
 	v.Filename = filename
 	v.Path = pathTemp
+	return nil
 }
 
 type VersionJsonFG3 struct {
