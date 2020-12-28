@@ -40,7 +40,7 @@ func QuestionFree(def string, question string, fmtArgs ...interface{}) string {
 }
 
 func Question(def string, choices []string, fixed bool, s string, fmtArgs ...interface{}) string {
-	if parsedArgs["auto"] == true {
+	if Options.auto == true {
 		return def
 	}
 
@@ -117,26 +117,32 @@ func UnzipFileToMemory(archive string, filePath string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer reader.Close()
 
-	for _, file := range reader.File {
-		if file.Name != filePath {
-			continue
-		}
+	var file *zip.File
 
-		fileReader, err := file.Open()
-		if err != nil {
-			return nil, err
+	for _, tempFile := range reader.File {
+		if tempFile.Name == filePath {
+			file = tempFile
+			break
 		}
-		defer fileReader.Close()
-
-		bytes, err := ioutil.ReadAll(fileReader)
-		if err != nil {
-			return nil, err
-		}
-		return bytes, nil
 	}
 
-	return nil, errors.New(fmt.Sprintf("file %s not found in archive %s", filePath, archive))
+	if file == nil {
+		return nil, errors.New(fmt.Sprintf("file %s not found in archive %s", filePath, archive))
+	}
+
+	fileReader, err := file.Open()
+	if err != nil {
+		return nil, err
+	}
+	defer fileReader.Close()
+
+	bytes, err := ioutil.ReadAll(fileReader)
+	if err != nil {
+		return nil, err
+	}
+	return bytes, nil
 }
 
 func FileOnServer(urlPath string) bool {
