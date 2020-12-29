@@ -11,12 +11,12 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -36,8 +36,12 @@ var Options struct {
 	auto bool
 	path string
 	startScript bool
-	help bool
 	threads int
+	integrityUpdate bool
+	integrity bool
+	verbose bool
+
+	help bool
 }
 
 
@@ -54,20 +58,28 @@ var Options struct {
 func main() {
 	//initWindows() // todo: more work on making it look nice and work properly, and avoid doing it unless windows 10
 	filename := filepath.Base(os.Args[0])
-	filename = "serverinstall_61_191"
+	filename = "serverinstall_79_209"
 
 	Options.auto = false
 	Options.path = ""
 	Options.startScript = false
 	Options.threads = runtime.NumCPU() * 2
+	Options.integrityUpdate = false
+	Options.verbose = false
+	Options.integrity = true
+
 	Options.help = false
 
 
 	flag.BoolVar(&Options.auto, "auto", Options.auto, "Ask no questions, use defaults.")
 	flag.StringVar(&Options.path, "path", Options.path, "Directory to install in. Default: current `directory`")
 	flag.BoolVar(&Options.startScript, "startScript", Options.startScript, "Generate a start script using specifications. Default: false")
-	flag.BoolVar(&Options.help,"help", Options.help, "This help screen")
 	flag.IntVar(&Options.threads, "threads", Options.threads, "Number of threads to use for downloading. Default: cpucores * 2")
+	flag.BoolVar(&Options.integrityUpdate, "integrityUpdate", Options.integrityUpdate, "Whether changed files should be overwritten with fresh copies when updating. Most useful when used with auto. Default: false")
+	flag.BoolVar(&Options.verbose, "verbose", Options.verbose, "Be a bit noisier on actions taken. Default: false")
+	flag.BoolVar(&Options.integrity, "integrity", Options.integrity, "Do a full integrity check. integrityUpdate assumed. Default: false")
+
+	flag.BoolVar(&Options.help,"help", Options.help, "This help screen")
 	flag.Parse()
 
 	if Options.help {
@@ -97,6 +109,7 @@ func HandleLaunch(file string) {
 	}
 	if _, err := os.Stat(installPath); os.IsNotExist(err) {
 		if QuestionYN(true,"Path %s does not exist - want to create it?", installPath) {
+			LogIfVerbose("Making folder %s\n", installPath)
 			if err := os.MkdirAll(installPath, os.FileMode(755)); err != nil {
 				log.Fatalf("An error occured whilst creating the folder %s: %v", installPath, err)
 			}
@@ -106,7 +119,6 @@ func HandleLaunch(file string) {
 	if _, err := os.Stat(path.Join(installPath, "version.json")); !os.IsNotExist(err) {
 		upgrade = true
 	}
-	_ = upgrade // temp
 
 	err, modpackId, versionId := ParseFilename(file)
 
@@ -119,13 +131,153 @@ func HandleLaunch(file string) {
 		log.Fatalf("Error fetching modpack: %v", err)
 	}
 
-
 	err, versionInfo := modpack.GetVersion(versionId)
 	if err != nil {
 		log.Fatalf("Error fetching modpack: %v", err)
 	}
 
 	downloads := versionInfo.GetDownloads()
+
+	upgradeStr := ""
+
+	if (upgrade) {
+		upgradeStr = "as an upgrade"
+	}
+
+	if !QuestionYN(true, "Continuing will install %s version %s%s. Do you wish to continue?", modpack.Name, versionInfo.Name, upgradeStr) {
+		log.Fatalf("Exiting on user input")
+	}
+
+	if upgrade {
+		err, info := GetVersionInfoFromFile(path.Join(installPath, "version.json"))
+		if err != nil {
+			if !QuestionYN(true, "An error occurred whilst trying to read the previous installation at %s: %v\nWould you like to continue anyway? Any folders which exist in the update will be deleted completely.", installPath, err) {
+				log.Fatalf("Aborting due to corrupted previous installation")
+			} else {
+				// TODO: handle removing folders here
+			}
+		}
+
+		if info.ParentId != modpack.ID {
+			if !QuestionYN(true, "Previous modpack is different to this modpack\nWould you like to continue anyway?", installPath, err) {
+				log.Fatalf("Aborting due to different modpack already installed")
+			}
+		}
+
+		oldDownloads := info.GetDownloads()
+		getSortFunc := func(arr []Download) func(i int, j int) bool {
+			return func(i int, j int) bool {
+				return arr[i].FullPath < arr[j].FullPath
+			}
+		}
+
+		sort.SliceStable(oldDownloads, getSortFunc(oldDownloads))
+		sort.SliceStable(downloads, getSortFunc(downloads))
+
+		lastFound := -1
+
+		downloadsLen := len(downloads)
+
+		var changedFilesOld []Download
+		var changedFilesNew []Download
+
+		var newFiles []Download
+		var oldDeletedFiles []Download
+		var integrityFailures []Download
+
+		for _, oldDown := range oldDownloads {
+			for i := lastFound + 1; i < downloadsLen; i++ {
+				newDown := downloads[i]
+				if oldDown.FullPath == newDown.FullPath {
+					lastFound = i
+					if oldDown.SHA1 != newDown.SHA1 {
+						changedFilesOld = append(changedFilesOld, oldDown)
+						changedFilesNew = append(changedFilesNew, newDown)
+						LogIfVerbose("Found changed file %s\n", newDown.FullPath)
+					} else if Options.integrity {
+						LogIfVerbose("Checking integrity of file %s\n", newDown.FullPath)
+						if oldDown.VerifyChecksum(installPath) {
+							integrityFailures = append(integrityFailures, oldDown)
+						}
+					}
+					break
+				}
+				if newDown.FullPath > oldDown.FullPath {
+					lastFound = i - 1
+					oldDeletedFiles = append(oldDeletedFiles, oldDown)
+					LogIfVerbose("Found deleted file %s\n", newDown.FullPath)
+					break
+				}
+				newFiles = append(newFiles, newDown)
+				LogIfVerbose("Found new file %s\n", newDown.FullPath)
+			}
+		}
+
+		log.Printf("This install has %v files changed, %v new files and %v deleted files\n", len(changedFilesOld), len(newFiles), len(oldDeletedFiles))
+
+		var failedChecksums []Download
+
+		for _, oldDown := range changedFilesOld {
+			if !oldDown.VerifyChecksum(installPath) {
+				failedChecksums = append(failedChecksums, oldDown)
+				LogIfVerbose("Detected failed checksum on %s\n", oldDown.FullPath)
+			}
+		}
+
+		if len(failedChecksums) > 0 {
+			overwrite := QuestionYN(Options.integrityUpdate || Options.integrity, "There are %v failed checksums on files to be updated. This may be as a result of manual config changes. Do you wish to overwrite them with the files from the update?", failedChecksums)
+			if overwrite {
+				for i := range failedChecksums {
+					changedFilesNew[i] = changedFilesNew[len(changedFilesNew)-1]
+				}
+				changedFilesNew = changedFilesNew[:len(changedFilesNew)-len(failedChecksums)]
+			}
+		}
+
+		if len(integrityFailures) > 0 {
+			if len(failedChecksums) > 0 {
+				overwrite := QuestionYN(true, "There are %v failed checksums on already existing files. This may be as a result of manual config changes. Do you wish to overwrite them with the files from the update?", failedChecksums)
+				if overwrite {
+					changedFilesNew = append(changedFilesNew, integrityFailures...)
+				}
+			}
+		}
+
+		downloads = append(changedFilesNew, newFiles...)
+
+		log.Println("Deleting removed files...")
+		for _, down := range oldDeletedFiles {
+			filePath := path.Join(installPath, down.FullPath)
+			LogIfVerbose("Removing %s\n", filePath)
+			if os.Remove(filePath) != nil {
+				log.Println("Error occurred whilst removing file " + filePath)
+				continue
+			}
+			tempPath := path.Join(installPath, down.Path)
+			dir, err := os.Open(tempPath)
+			empty := false
+			if err == nil {
+				empty = true
+				names, _ := dir.Readdirnames(-1)
+				for _, name := range names {
+					if name != "." && name != ".." {
+						empty = false
+						break
+					}
+				}
+			}
+			if empty {
+				LogIfVerbose("Removing %s as is empty\n", tempPath)
+				if os.RemoveAll(tempPath) != nil {
+					log.Println("Error occurred whilst removing folder " + tempPath)
+				}
+			}
+		}
+
+		log.Println("Performing update...")
+	} else {
+		log.Println("Performing installation...")
+	}
 
 	err, ml := versionInfo.GetModLoader()
 
@@ -172,6 +324,8 @@ func HandleLaunch(file string) {
 
 	ml.Install(installPath)
 
+	versionInfo.WriteJson(installPath)
+
 	// return the number of failed downloads as exit code
 	os.Exit(failed)
 }
@@ -188,55 +342,6 @@ func ParseFilename(file string) (error, int, int) {
 		return errors.New("unable to parse filename: " + file), -1, -1
 	}
 	return nil, modpackId, versionId
-}
-
-func GetModpack(id int) (error, Modpack) {
-	ret := Modpack{}
-	newUrl := fmt.Sprintf(BaseModpackURL+"%d", id)
-	err := APICall(newUrl, &ret)
-	if err != nil {
-		return err, ret
-	}
-	return ret.GetError(), ret
-}
-
-func (m Modpack) GetVersion(versionId int) (error, VersionInfo) {
-	var version *Version
-	var ret VersionInfo
-	Free:
-	for _, v := range m.Versions {
-		if v.ID == versionId {
-			version = &v
-			break Free
-		}
-	}
-	if version == nil {
-		return errors.New("version does not exist"), ret
-	}
-
-	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", m.ID, version.ID)
-	err := APICall(newUrl, &ret)
-	if err != nil {
-		return err, ret
-	}
-
-	return ret.GetError(), ret
-}
-
-func (v VersionInfo) GetDownloads() []Download {
-	var downloads []Download
-	for _, f := range v.Files {
-		if f.ClientOnly {
-			continue
-		}
-		parse, err := url.Parse(f.URL)
-		if err != nil {
-			//shrug
-			continue
-		}
-		downloads = append(downloads, Download{f.Path, *parse, f.Name, f.SHA1})
-	}
-	return downloads
 }
 
 func (v VersionInfo) GetModLoader() (error, ModLoader) {
@@ -292,6 +397,12 @@ func APICall(url string, val interface{}) error {
 	return nil
 }
 
+func LogIfVerbose(fmt string, v ...interface{}) {
+	if Options.verbose {
+		log.Printf(fmt, v...)
+	}
+}
+
 func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Response, error) {
 	fi, err := os.Stat(dst)
 	if err != nil {
@@ -307,6 +418,7 @@ func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Resp
 		if err != nil {
 			return nil, err
 		}
+		req.NoResume = true // force re-download
 		if len(downloads[i].SHA1) > 0 {
 			byteHex, _ := hex.DecodeString(downloads[i].SHA1)
 			req.SetChecksum(crypto.SHA1.New(), byteHex, false)

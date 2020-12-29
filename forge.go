@@ -121,7 +121,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	if err != nil {
 		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
-	downloads := []Download{{"", *URL, universalName, ""}}
+	downloads := []Download{{"", *URL, universalName, "", path.Join("", universalName)}}
 
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJson{}
@@ -216,7 +216,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 	if err != nil {
 		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
-	downloads := []Download{{"", *URL, installerName + ".jar", ""}}
+	downloads := []Download{{"", *URL, installerName + ".jar", "", path.Join("", installerName + ".jar")}}
 
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJsonFG3{}
@@ -238,8 +238,10 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 }
 
 func (f ForgeInstall) Install(installPath string) bool {
+	log.Println("Running Forge installer")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
-	installerName := fmt.Sprintf("forge-%s.jar", versionStr)
+	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
+	LogIfVerbose("Running java -jar %s --installServer", installerName)
 	cmd := exec.Command("java", "-jar", installerName, "--installServer")
 	cmd.Dir = installPath
 	cmd.Stdout = os.Stdout
@@ -287,7 +289,7 @@ func (v VersionJson) GetLibraryDownloads() []Download {
 		if len(artichoke.Hashes) > 0 {
 			hash = artichoke.Hashes[0]
 		}
-		downloads = append(downloads, Download{"libraries/" + dir, *actualUrl, file, hash})
+		downloads = append(downloads, Download{path.Join("libraries" + dir), *actualUrl, file, hash, path.Join("libraries", dir, file)})
 	}
 	return downloads
 }
@@ -344,7 +346,7 @@ func (v VersionJsonFG3) GetDownloads() []Download {
 			if err != nil {
 				continue
 			}
-			downloads = append(downloads, Download{"libraries/" + dir, *actualUrl, file, artichoke.SHA1})
+			downloads = append(downloads, Download{path.Join("libraries", dir), *actualUrl, file, artichoke.SHA1, path.Join("libraries", dir, file)})
 		}
 	}
 	return downloads

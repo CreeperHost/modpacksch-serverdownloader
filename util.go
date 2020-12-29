@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -210,7 +211,7 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 			if err == nil {
 				URL, err := url.Parse(vanillaManifest.Downloads.Server.URL)
 				if err == nil {
-					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", vanillaManifest.Downloads.Server.SHA1}
+					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", vanillaManifest.Downloads.Server.SHA1, path.Join("", "minecraft_server." + v.ID + ".jar")}
 				}
 			}
 		}
