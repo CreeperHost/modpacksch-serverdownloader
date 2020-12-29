@@ -26,6 +26,7 @@ var client = &http.Client{}
 const BaseAPIURL = "https://api.modpacks.ch/"
 const BaseModpackURL = BaseAPIURL + "public/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
+const BaseName = "serverinstall"
 var (
 	inProgress = 0
 	succeeded = 0
@@ -123,7 +124,7 @@ func HandleLaunch(file string) {
 	err, modpackId, versionId := ParseFilename(file)
 
 	if err != nil {
-		log.Fatalf("Cannot locate modpack via filename %v", err)
+		log.Fatalf("Cannot locate modpack via filename: %v", err)
 	}
 
 	err, modpack := GetModpack(modpackId)
@@ -141,7 +142,7 @@ func HandleLaunch(file string) {
 	upgradeStr := ""
 
 	if (upgrade) {
-		upgradeStr = "as an upgrade"
+		upgradeStr = " as an update"
 	}
 
 	if !QuestionYN(true, "Continuing will install %s version %s%s. Do you wish to continue?", modpack.Name, versionInfo.Name, upgradeStr) {
@@ -331,8 +332,11 @@ func HandleLaunch(file string) {
 }
 
 func ParseFilename(file string) (error, int, int) {
-	re := regexp.MustCompile("^serverinstall_(\\d+)_(\\d+)")
+	re := regexp.MustCompile("^" + BaseName + "_(\\d+)_(\\d+)")
 	matched := re.FindStringSubmatch(file)
+	if len(matched) < 3 {
+		return errors.New("unable to parse filename: " + file), -1, -1
+	}
 	modpackId, err := strconv.Atoi(matched[1])
 	if err != nil {
 		return errors.New("unable to parse filename: " + file), -1, -1
