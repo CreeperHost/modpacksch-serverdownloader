@@ -41,7 +41,7 @@ func QuestionFree(def string, question string, fmtArgs ...interface{}) string {
 }
 
 func Question(def string, choices []string, fixed bool, s string, fmtArgs ...interface{}) string {
-	if Options.auto == true {
+	if Options.Auto == true {
 		return def
 	}
 

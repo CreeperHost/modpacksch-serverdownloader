@@ -150,8 +150,16 @@ func (f ForgeUniversal) Install(installPath string) bool {
 	return true
 }
 
-type ForgeInstall struct {
-	Version ForgeVersion
+func (f ForgeUniversal) GetLaunchJar(installPath string) string {
+	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
+		return forgeJar
+	}
+	forgeJar =  fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
+		return forgeJar
+	}
+	return "insert-jar-here.jar"
 }
 
 const versionFmt = "%s-%s"
@@ -170,7 +178,7 @@ func GetMirrorFor(urlStr string) string {
 	mirrors := GetMirrors()
 	var actualUrlStr string
 	baseUrlStr := strings.Replace(urlStr, "https://files.minecraftforge.net/maven/", "", 1)
-	Out:
+Out:
 	for _, mirror := range mirrors {
 		actualUrlStr = mirror + baseUrlStr
 		if FileOnServer(actualUrlStr) {
@@ -178,6 +186,10 @@ func GetMirrorFor(urlStr string) string {
 		}
 	}
 	return actualUrlStr
+}
+
+type ForgeInstall struct {
+	Version ForgeVersion
 }
 
 func (f ForgeInstall) GetDownloads(installPath string) []Download {
@@ -256,6 +268,18 @@ func (f ForgeInstall) Install(installPath string) bool {
 	return true
 }
 
+func (f ForgeInstall) GetLaunchJar(installPath string) string {
+	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
+		return forgeJar
+	}
+	forgeJar =  fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
+		return forgeJar
+	}
+	return "insert-jar-here.jar"
+}
+
 type ForgeInJar struct {
 	Version ForgeVersion
 }
@@ -267,6 +291,18 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 
 func (f ForgeInJar) Install(installPath string) bool {
 	panic("implement me")
+}
+
+func (f ForgeInJar) GetLaunchJar(installPath string) string {
+	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+		return forgeJar
+	}
+	forgeJar =  fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+		return forgeJar
+	}
+	return "insert-jar-here.jar"
 }
 
 type VersionJson struct {

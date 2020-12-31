@@ -9,10 +9,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"runtime"
 )
 
 type APIFunctions interface {
@@ -48,6 +50,7 @@ type Version struct {
 	Name    string `json:"name"`
 	Type    string `json:"type"`
 	Updated int    `json:"updated"`
+	Specs   Specs  `json:"specs"`
 }
 
 type Specs struct {
@@ -93,6 +96,7 @@ type Download struct {
 func GetModpack(id int) (error, Modpack) {
 	ret := Modpack{}
 	newUrl := fmt.Sprintf(BaseModpackURL+"%d", id)
+	println(newUrl)
 	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
@@ -103,12 +107,27 @@ func GetModpack(id int) (error, Modpack) {
 func (m Modpack) GetVersion(versionId int) (error, VersionInfo) {
 	var version *Version
 	var ret VersionInfo
-Free:
+	latest := false
+	if versionId == -2 {
+		latest = true
+	}
+	highestId := -1
+	var highestVer *Version
 	for _, v := range m.Versions {
-		if v.ID == versionId {
-			version = &v
-			break Free
+		if latest {
+			if v.ID > highestId {
+				highestId = v.ID
+				highestVer = &v
+			}
+		} else {
+			if v.ID == versionId {
+				version = &v
+				break
+			}
 		}
+	}
+	if latest {
+		version = highestVer
 	}
 	if version == nil {
 		return errors.New("version does not exist"), ret
@@ -156,6 +175,50 @@ func (v VersionInfo) WriteJson(installPath string) bool {
 	defer resp.Body.Close()
 
 	return ioutil.WriteFile(path.Join(installPath, "version.json"), stringRet, 644) == nil
+}
+
+func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
+	jar := loader.GetLaunchJar(installPath)
+	launch := fmt.Sprintf("-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx%dM -Xms%dM -jar %s nogui", v.Specs.Recommend, v.Specs.Minimum, jar)
+	var script string
+	filename := "start"
+	if runtime.GOOS == "windows" {
+		script = "@echo off\r\n" +
+			"IF EXIST eula.txt (\r\n" +
+			"  goto CHECKEULA\r\n" +
+			") ELSE (\r\n" +
+			"  goto ASKEULA\r\n" +
+			")\r\n" +
+			"IF %errlevel% EQU 1 goto END\r\n" +
+			":CHECKEULA\r\n" +
+			">nul find \"eula=false\" eula.txt && (\r\n" +
+			"  goto ASKEULA\r\n" +
+			") || (\r\n" +
+			"  goto END\r\n" +
+			")\r\n" +
+			":ASKEULA\r\n" +
+			"echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\r\n" +
+			"set /p EULA=[y/n]\r\n" +
+			"IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
+			"echo eula=true>eula.txt\r\n" +
+			":END\r\n" +
+			"java.exe " + launch
+			filename += ".bat"
+	} else {
+		script = "#!/bin/bash\n" +
+		"if ! grep -q \"eula=true\" eula.txt; then" +
+		"    echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n" +
+		"    EULA=`read  -n 1 -p \"[y/n] \"`\n" +
+		"    if [ \"$EULA\" = \"y\" ]; then\n" +
+		"        echo \"eula=true\" > eula.txt\n" +
+		"    fi\n" +
+		"fi" +
+		"java "+launch
+		filename += ".sh"
+	}
+	if err := ioutil.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
+		log.Println(fmt.Sprintf("Error occurred whilst creating launch script: %v", err))
+	}
 }
 
 func GetVersionInfoFromFile(file string) (error, VersionInfo) {
