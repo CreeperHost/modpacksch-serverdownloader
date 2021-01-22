@@ -1,7 +1,7 @@
 package main
 
-type ModLoader interface {
-	GetDownloads(installPath string) []Download
-	Install(installPath string) bool
-	GetLaunchJar(installPath string) string
+type modLoader interface {
+	getDownloads(installPath string) []Download
+	install(installPath string) bool
+	getLaunchJar(installPath string) string
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cavaliercoder/grab"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -14,33 +13,36 @@ import (
 	"path"
 	"strconv"
 	"strings"
+
+	"github.com/cavaliercoder/grab"
 )
 
-func GetForge(modloader Target, mc Minecraft) (error, ModLoader) {
+func GetForge(modloader Target, mc Minecraft) (ModLoader, error) {
 	version := ForgeVersion{}
 	version.RawVersion = modloader.Version
 	version.Minecraft = mc
-	err := version.Parse(); if err != nil {
-		return err, nil
+	err := version.parse()
+	if err != nil {
+		return nil, err
 	}
 	if mc.MinorVersion >= 13 || (mc.MinorVersion == 12 && version.Build >= 2851) {
-		return nil, ForgeInstall{version}
+		return forgeInstall{version}, nil
 	}
 	if mc.MinorVersion > 5 {
-		return nil, ForgeUniversal{version}
+		return ForgeUniversal{version}, nil
 	}
-	return nil, ForgeInJar{version}
+	return ForgeInJar{version}, nil
 }
 
 type ForgeVersion struct {
 	RawVersion string
-	Major int
-	Minor int
-	Build int
-	Minecraft Minecraft
+	Major      int
+	Minor      int
+	Build      int
+	Minecraft  Minecraft
 }
 
-func (f* ForgeVersion) Parse() error {
+func (f *ForgeVersion) parse() error {
 	splitVer := strings.Split(f.RawVersion, ".")
 
 	if len(splitVer) >= 3 {
@@ -71,7 +73,7 @@ func (f* ForgeVersion) Parse() error {
 		}
 		f.Minor = val
 
-		val, err = strconv.Atoi(splitVer[len(splitVer) - 1])
+		val, err = strconv.Atoi(splitVer[len(splitVer)-1])
 		if err != nil {
 			return err
 		}
@@ -87,7 +89,7 @@ type ForgeUniversal struct {
 	Version ForgeVersion
 }
 
-func (f ForgeUniversal) GetDownloads(installPath string) []Download {
+func (f ForgeUniversal) getDownloads(installPath string) []Download {
 	log.Println("Getting downloads for Forge Universal")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	universalName := fmt.Sprintf("forge-%s-universal.jar", versionStr)
@@ -125,7 +127,8 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJson{}
-		err := json.Unmarshal(rawForgeJSON, &versionForge); if err == nil {
+		err := json.Unmarshal(rawForgeJSON, &versionForge)
+		if err == nil {
 			downloads = append(downloads, versionForge.GetLibraryDownloads()...)
 		} else {
 			log.Fatalf("Cannot get a json to download the libraries which is required: %v", err)
@@ -146,16 +149,16 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f ForgeUniversal) Install(installPath string) bool {
+func (f ForgeUniversal) install(installPath string) bool {
 	return true
 }
 
-func (f ForgeUniversal) GetLaunchJar(installPath string) string {
+func (f ForgeUniversal) getLaunchJar(installPath string) string {
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
 		return forgeJar
 	}
-	forgeJar =  fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
 		return forgeJar
 	}
@@ -164,6 +167,7 @@ func (f ForgeUniversal) GetLaunchJar(installPath string) string {
 
 const versionFmt = "%s-%s"
 const versionFmtOther = "%s-%s"
+
 //const forgeUrlMergeJar
 const universalNameFmt = "forge-%s-%s-%s-universal"
 const forgeUrlUniversalJar = "https://apps.modpacks.ch/versions/net/minecraftforge/forge/%s/%s"
@@ -171,7 +175,7 @@ const forgeUrlInstallJar = "https://apps.modpacks.ch/versions/net/minecraftforge
 const forgeUrlInstallJSON = "https://apps.modpacks.ch/versions/net/minecraftforge/forge/%s/forge-%s.json"
 
 func GetMirrors() []string {
-	return []string{"https://libraries.minecraft.net/", "https://apps.modpacks.ch/versions/", "https://files.minecraftforge.net/maven/"}
+	return []string{"https://libraries.minecraft.net/", "https://forge.modpacks.ch/maven", "https://apps.modpacks.ch/versions/", "https://files.minecraftforge.net/maven/"}
 }
 
 func GetMirrorFor(urlStr string) string {
@@ -188,33 +192,33 @@ Out:
 	return actualUrlStr
 }
 
-type ForgeInstall struct {
+type forgeInstall struct {
 	Version ForgeVersion
 }
 
-func (f ForgeInstall) GetDownloads(installPath string) []Download {
+func (f forgeInstall) getDownloads(installPath string) []Download {
 	log.Println("Getting downloads for Forge Install")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
-	forgeUrl := fmt.Sprintf(forgeUrlInstallJar, versionStr, installerName)
-	forgeUrlJSON := fmt.Sprintf(forgeUrlInstallJSON, versionStr, versionStr)
+	forgeURL := fmt.Sprintf(forgeUrlInstallJar, versionStr, installerName)
+	forgeURLJSON := fmt.Sprintf(forgeUrlInstallJSON, versionStr, versionStr)
 	var rawForgeJSON []byte
-	if !FileOnServer(forgeUrlJSON) {
-		resp, err := grab.Get(installPath, forgeUrl)
+	if !FileOnServer(forgeURLJSON) {
+		resp, err := grab.Get(installPath, forgeURL)
 		if err != nil {
 			log.Fatalf("JSON not on server and unable to get forge jar: %v", err)
 		}
 		if resp.IsComplete() {
 			resp.Wait()
 		}
-		bytes, err := UnzipFileToMemory(path.Join(installPath, installerName + ".jar"), "version.json")
+		bytes, err := UnzipFileToMemory(path.Join(installPath, installerName+".jar"), "version.json")
 		if err == nil {
 			rawForgeJSON = bytes
 		} else {
 			return []Download{} // Unable to get other downloads. Womp womp. Will let installer do it.
 		}
 	} else {
-		resp, err := http.Get(forgeUrlJSON)
+		resp, err := http.Get(forgeURLJSON)
 		if err == nil {
 			defer resp.Body.Close()
 			bytes, err := ioutil.ReadAll(resp.Body)
@@ -224,15 +228,16 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 		}
 	}
 
-	URL, err := url.Parse(forgeUrl)
+	URL, err := url.Parse(forgeURL)
 	if err != nil {
-		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
+		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeURL, err)
 	}
-	downloads := []Download{{"", *URL, installerName + ".jar", "", path.Join("", installerName + ".jar")}}
+	downloads := []Download{{"", *URL, installerName + ".jar", "", path.Join("", installerName+".jar")}}
 
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJsonFG3{}
-		err := json.Unmarshal(rawForgeJSON, &versionForge); if err == nil {
+		err := json.Unmarshal(rawForgeJSON, &versionForge)
+		if err == nil {
 			downloads = append(downloads, versionForge.GetDownloads()...)
 		}
 	}
@@ -249,11 +254,11 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f ForgeInstall) Install(installPath string) bool {
+func (f forgeInstall) install(installPath string) bool {
 	log.Println("Running Forge installer")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
-	LogIfVerbose("Running java -jar %s --installServer", installerName)
+	logIfVerbose("Running java -jar %s --installServer", installerName)
 	cmd := exec.Command("java", "-jar", installerName, "--installServer")
 	cmd.Dir = installPath
 	cmd.Stdout = os.Stdout
@@ -268,12 +273,12 @@ func (f ForgeInstall) Install(installPath string) bool {
 	return true
 }
 
-func (f ForgeInstall) GetLaunchJar(installPath string) string {
+func (f forgeInstall) getLaunchJar(installPath string) string {
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
 		return forgeJar
 	}
-	forgeJar =  fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
 		return forgeJar
 	}
@@ -284,21 +289,21 @@ type ForgeInJar struct {
 	Version ForgeVersion
 }
 
-func (f ForgeInJar) GetDownloads(installPath string) []Download {
+func (f ForgeInJar) getDownloads(installPath string) []Download {
 	log.Println("Getting downloads for Forge In Jar")
 	panic("implement me")
 }
 
-func (f ForgeInJar) Install(installPath string) bool {
+func (f ForgeInJar) install(installPath string) bool {
 	panic("implement me")
 }
 
-func (f ForgeInJar) GetLaunchJar(installPath string) string {
+func (f ForgeInJar) getLaunchJar(installPath string) string {
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
 		return forgeJar
 	}
-	forgeJar =  fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
 		return forgeJar
 	}
@@ -331,16 +336,16 @@ func (v VersionJson) GetLibraryDownloads() []Download {
 }
 
 type VersionLibrary struct {
-	Name     string `json:"name"`
-	Server   bool `json:"serverreq"`
-	BaseURL  string `json:"url"`
+	Name     string   `json:"name"`
+	Server   bool     `json:"serverreq"`
+	BaseURL  string   `json:"url"`
 	Hashes   []string `json:"hashes"`
 	Url      string
 	Path     string
 	Filename string
 }
 
-func (v* VersionLibrary) UnmarshalJSON(data []byte) error {
+func (v *VersionLibrary) UnmarshalJSON(data []byte) error {
 	type versionlibrary2 VersionLibrary
 	if err := json.Unmarshal(data, (*versionlibrary2)(v)); err != nil {
 		return err
@@ -389,11 +394,11 @@ func (v VersionJsonFG3) GetDownloads() []Download {
 }
 
 type VersionLibraryFG3 struct {
-	Name string `json:"name"`
+	Name     string `json:"name"`
 	Download struct {
 		Artifact struct {
 			Path string `json:"path"`
-			Url string  `json:"url"`
+			Url  string `json:"url"`
 			SHA1 string `json:"sha1"`
 		} `json:"artifact"`
 	} `json:"downloads"`
