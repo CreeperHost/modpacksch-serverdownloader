@@ -59,7 +59,7 @@ func Question(def string, choices []string, fixed bool, s string, fmtArgs ...int
 		choicesFmt = fmt.Sprintf("[%v]", def)
 	}
 
-	fmt.Println(fmt.Sprintf(s, fmtArgs...) + fmt.Sprintf(" "+choicesFmt, choicesInt...))
+	fmt.Println(fmt.Sprintf(s, fmtArgs...) + fmt.Sprintf(" " + choicesFmt, choicesInt...))
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	response := scanner.Text()
@@ -84,7 +84,7 @@ func Question(def string, choices []string, fixed bool, s string, fmtArgs ...int
 	return response
 }
 
-func (m *Minecraft) Parse() error {
+func (m* Minecraft) Parse() error {
 	splitVer := strings.Split(m.RawVersion, ".")
 	if len(splitVer) == 0 {
 		return errors.New(fmt.Sprintf("minecraft Version does not match expected format: %s", m.RawVersion))
@@ -163,7 +163,7 @@ type VanillaListManifest struct {
 }
 
 type VanillaVersion struct {
-	ID  string `json:"id"`
+	ID string `json:"id"`
 	URL string `json:"url"`
 }
 
@@ -171,7 +171,7 @@ type VanillaManifest struct {
 	Downloads struct {
 		Server struct {
 			SHA1 string
-			URL  string
+			URL string
 		} `json:"server"`
 	} `json:"downloads"`
 }
@@ -186,7 +186,7 @@ func (m Minecraft) GetVanillaVersion() (VanillaVersion, error) {
 			var manifest VanillaListManifest
 			err := json.Unmarshal(bytes, &manifest)
 			if err == nil {
-			Stuff:
+				Stuff:
 				for _, v := range manifest.Versions {
 					if v.ID == m.RawVersion {
 						ret = v
@@ -211,7 +211,7 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 			if err == nil {
 				URL, err := url.Parse(vanillaManifest.Downloads.Server.URL)
 				if err == nil {
-					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", vanillaManifest.Downloads.Server.SHA1, path.Join("", "minecraft_server."+v.ID+".jar")}
+					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", vanillaManifest.Downloads.Server.SHA1, path.Join("", "minecraft_server." + v.ID + ".jar")}
 				}
 			}
 		}

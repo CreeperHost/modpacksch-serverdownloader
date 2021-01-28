@@ -17,29 +17,29 @@ import (
 	"runtime"
 )
 
-type apiFunctions interface {
+type APIFunctions interface {
 	GetError() error
 }
 
-type apiResponse struct {
+type APIResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
 
-type searchResult struct {
-	*apiResponse
+type SearchResult struct {
+	*APIResponse
 	PackIDs []int `json:"packs"`
 }
 
-func (resp apiResponse) getError() error {
+func (resp APIResponse) GetError() error {
 	if resp.Status == "error" {
 		return errors.New(resp.Message)
 	}
 	return nil
 }
 
-type modpack struct {
-	*apiResponse
+type Modpack struct {
+	*APIResponse
 	ID       int       `json:"id"`
 	Name     string    `json:"name"`
 	Versions []Version `json:"versions"`
@@ -50,27 +50,27 @@ type Version struct {
 	Name    string `json:"name"`
 	Type    string `json:"type"`
 	Updated int    `json:"updated"`
-	Specs   specs  `json:"specs"`
+	Specs   Specs  `json:"specs"`
 }
 
-type specs struct {
+type Specs struct {
 	Minimum   int `json:"minimum"`
 	Recommend int `json:"recommended"`
 }
 
-type versionInfo struct {
-	*apiResponse
+type VersionInfo struct {
+	*APIResponse
 	*Version
-	Files    []File   `json:"files"`
-	ParentId int      `json:"parent"`
-	Targets  []Target `json:"targets"`
-	RawJson  string
+	Files []File  `json:"files"`
+	ParentId int  `json:"parent"`
+	Targets []Target `json:"targets"`
+	RawJson string
 }
 
 type Target struct {
-	Name    string `json:"name"`
+	Name string    `json:"name"`
 	Version string `json:"Version"`
-	Type    string `json:"type"`
+	Type string    `json:"type"`
 }
 
 type File struct {
@@ -85,27 +85,28 @@ type File struct {
 }
 
 type Download struct {
-	Path     string
-	URL      url.URL
-	Name     string
-	SHA1     string
+	Path string
+	URL url.URL
+	Name string
+	SHA1 string
 	FullPath string
 }
 
-func GetModpack(id int) (error, modpack) {
-	ret := modpack{}
-	newUrl := fmt.Sprintf(baseModpackURL+"%d", id)
+
+func GetModpack(id int) (error, Modpack) {
+	ret := Modpack{}
+	newUrl := fmt.Sprintf(BaseModpackURL+"%d", id)
 	println(newUrl)
-	err := apiCall(newUrl, &ret)
+	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
 	}
-	return ret.getError(), ret
+	return ret.GetError(), ret
 }
 
-func (m modpack) GetVersion(versionId int) (error, versionInfo) {
+func (m Modpack) GetVersion(versionId int) (error, VersionInfo) {
 	var version *Version
-	var ret versionInfo
+	var ret VersionInfo
 	latest := false
 	if versionId == -2 {
 		latest = true
@@ -132,16 +133,16 @@ func (m modpack) GetVersion(versionId int) (error, versionInfo) {
 		return errors.New("version does not exist"), ret
 	}
 
-	newUrl := fmt.Sprintf(baseModpackURL+"%d/%d", m.ID, version.ID)
-	err := apiCall(newUrl, &ret)
+	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", m.ID, version.ID)
+	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
 	}
 
-	return ret.getError(), ret
+	return ret.GetError(), ret
 }
 
-func (v versionInfo) GetDownloads() []Download {
+func (v VersionInfo) GetDownloads() []Download {
 	var downloads []Download
 	for _, f := range v.Files {
 		if f.ClientOnly {
@@ -157,8 +158,8 @@ func (v versionInfo) GetDownloads() []Download {
 	return downloads
 }
 
-func (v versionInfo) WriteJson(installPath string) bool {
-	newUrl := fmt.Sprintf(baseModpackURL+"%d/%d", v.ParentId, v.ID)
+func (v VersionInfo) WriteJson(installPath string) bool {
+	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", v.ParentId, v.ID)
 	req, err := http.NewRequest("GET", newUrl, nil)
 	if err != nil {
 		return false
@@ -176,8 +177,8 @@ func (v versionInfo) WriteJson(installPath string) bool {
 	return ioutil.WriteFile(path.Join(installPath, "version.json"), stringRet, 644) == nil
 }
 
-func (v versionInfo) WriteStartScript(installPath string, loader modLoader) {
-	jar := loader.getLaunchJar(installPath)
+func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
+	jar := loader.GetLaunchJar(installPath)
 	launch := fmt.Sprintf("-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx%dM -Xms%dM -jar %s nogui", v.Specs.Recommend, v.Specs.Minimum, jar)
 	var script string
 	filename := "start"
@@ -202,17 +203,17 @@ func (v versionInfo) WriteStartScript(installPath string, loader modLoader) {
 			"echo eula=true>eula.txt\r\n" +
 			":END\r\n" +
 			"java.exe " + launch
-		filename += ".bat"
+			filename += ".bat"
 	} else {
 		script = "#!/bin/bash\n" +
-			"if ! grep -q \"eula=true\" eula.txt; then" +
-			"    echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n" +
-			"    EULA=`read  -n 1 -p \"[y/n] \"`\n" +
-			"    if [ \"$EULA\" = \"y\" ]; then\n" +
-			"        echo \"eula=true\" > eula.txt\n" +
-			"    fi\n" +
-			"fi" +
-			"java " + launch
+		"if ! grep -q \"eula=true\" eula.txt; then" +
+		"    echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n" +
+		"    EULA=`read  -n 1 -p \"[y/n] \"`\n" +
+		"    if [ \"$EULA\" = \"y\" ]; then\n" +
+		"        echo \"eula=true\" > eula.txt\n" +
+		"    fi\n" +
+		"fi" +
+		"java "+launch
 		filename += ".sh"
 	}
 	if err := ioutil.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
@@ -220,8 +221,8 @@ func (v versionInfo) WriteStartScript(installPath string, loader modLoader) {
 	}
 }
 
-func GetVersionInfoFromFile(file string) (error, versionInfo) {
-	ret := versionInfo{}
+func GetVersionInfoFromFile(file string) (error, VersionInfo) {
+	ret := VersionInfo{}
 	bytes, err := ioutil.ReadFile(file)
 	if err != nil {
 		return err, ret
