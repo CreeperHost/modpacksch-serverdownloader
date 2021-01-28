@@ -201,7 +201,8 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
 			"IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
 			"echo eula=true>eula.txt\r\n" +
 			":END\r\n" +
-			"java.exe " + launch
+			"java.exe " + launch + "\r\n" +
+			"pause"
 			filename += ".bat"
 	} else {
 		script = "#!/bin/bash\n" +
