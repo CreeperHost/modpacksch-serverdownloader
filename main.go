@@ -69,7 +69,6 @@ var Options struct {
 func main() {
 	//initWindows() // todo: more work on making it look nice and work properly, and avoid doing it unless windows 10
 	filename := filepath.Base(os.Args[0])
-	filename = "serverinstall_79_209"
 
 	Options.Auto = false
 	Options.Path = ""
@@ -139,7 +138,6 @@ func main() {
 				v.SetBool(val == "true")
 				break
 			case "string":
-				log.Println("Setting " + name + " to " + val)
 				v.SetString(val)
 				break
 			case "int64":
@@ -483,7 +481,6 @@ func (v VersionInfo) GetModLoader() (error, ModLoader) {
 }
 
 func APICall(url string, val interface{}) error {
-	println(url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err

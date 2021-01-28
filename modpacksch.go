@@ -96,7 +96,6 @@ type Download struct {
 func GetModpack(id int) (error, Modpack) {
 	ret := Modpack{}
 	newUrl := fmt.Sprintf(BaseModpackURL+"%d", id)
-	println(newUrl)
 	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
@@ -206,14 +205,15 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
 			filename += ".bat"
 	} else {
 		script = "#!/bin/bash\n" +
-		"if ! grep -q \"eula=true\" eula.txt; then" +
+		"if ! grep -q \"eula=true\" eula.txt; then\n" +
 		"    echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n" +
-		"    EULA=`read  -n 1 -p \"[y/n] \"`\n" +
+		"    read  -n 1 -p \"[y/n] \" EULA\n" +
 		"    if [ \"$EULA\" = \"y\" ]; then\n" +
 		"        echo \"eula=true\" > eula.txt\n" +
+		"        echo\n" +
 		"    fi\n" +
-		"fi" +
-		"java "+launch
+		"fi\n" +
+		"java " + launch
 		filename += ".sh"
 	}
 	if err := ioutil.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
