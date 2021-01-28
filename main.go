@@ -28,7 +28,7 @@ const BaseAPIURL = "https://api.modpacks.ch/"
 const BaseModpackURL = BaseAPIURL + "public/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
 const BaseName = "serverinstall"
-const verStr = "1.0"
+const verStr = "280120212000"
 var (
 	inProgress = 0
 	succeeded = 0
@@ -150,7 +150,7 @@ func main() {
 	}
 
 	if Options.Help == true {
-		PrintUsage()
+		PrintUsage(filename)
 		os.Exit(0)
 	}
 
@@ -161,7 +161,7 @@ func main() {
 	HandleLaunch(filename, packIdFound, versionFound)
 }
 
-func PrintUsage() {
+func PrintUsage(filename string) {
 	println("                      _                  _              _     ")
 	println("                     | |                | |            | |    ")
 	println("  _ __ ___   ___   __| |_ __   __ _  ___| | _____   ___| |__  ")
@@ -172,6 +172,7 @@ func PrintUsage() {
 	println("                       |_|                                    ")
 	println(" modpacks.ch server downloader golang - build "+verStr)
 	println("Usage:")
+	println("  " + filename + "<modpackid> <versionid> (depending on file name, and arguments)")
 
 
 	t := reflect.ValueOf(Options)
