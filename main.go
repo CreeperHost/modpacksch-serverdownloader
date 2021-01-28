@@ -427,6 +427,12 @@ func HandleLaunch(file string, found int, versionFound int) {
 		failed,
 		inProgress)
 
+	if failed > 0 {
+		if !QuestionYN(true, "Some downloads failed. Would you like to continue anyway?") {
+			os.Exit(failed)
+		}
+	}
+
 	ml.Install(installPath)
 
 	versionInfo.WriteJson(installPath)
@@ -436,7 +442,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 	}
 
 	// return the number of failed downloads as exit code
-	os.Exit(failed)
+	os.Exit(0)
 }
 
 func ParseFilename(file string) (error, int, int) {
