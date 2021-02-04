@@ -28,7 +28,7 @@ const BaseAPIURL = "https://api.modpacks.ch/"
 const BaseModpackURL = BaseAPIURL + "public/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
 const BaseName = "serverinstall"
-const verStr = "280120212000"
+const verStr = "202102041512"
 var (
 	inProgress = 0
 	succeeded = 0
@@ -40,34 +40,14 @@ var Options struct {
 	Path            string  `help:"Directory to install in. Default: current directory"`
 	Noscript        bool    `help:"Skip creating start script. Default: false"`
 	Threads         int     `help:"Number of threads to use for downloading. Default: cpucores * 2"`
-	Integrityupdate bool    `help:"Whether changed files should be overwritten with fresh copies when updating. Most useful when used with Auto. Default: false"`
-	Integrity       bool    `help:"Do a full integrity check. integrityUpdate assumed. Default: false"`
+	Integrityupdate bool    `help:"Whether changed files should be overwritten with fresh copies when updating. Most useful when used with Auto. Default: false\n    Example: You changed config/test.cfg on your server from default. The modpack updates config/test.cfg - with this flag, it will assume you wish to overwrite with the latest version"`
+	Integrity       bool    `help:"Do a full integrity check, even on files not changed by the update. integrityupdate assumed. Default: false"`
 	Verbose         bool    `help:"Be a bit noisier on actions taken. Default: false"`
-	Latest          bool    `help:"Install latest, ignoring any version in the file name. Default: false"`
+	Latest          bool    `help:"Install latest, ignoring any version in the file name or arguments. Default: false"`
 	Help            bool    `help:"This help"`
 }
 
-/*flag.Bool(&Options.Auto, "-Auto", Options.Auto, "Ask no questions, use defaults.")
-	flag.StringVar(&Options.path, "-path", Options.path, "Directory to install in. Default: current `directory`")
-	flag.BoolVar(&Options.noscript, "noscript", Options.noscript, "Skip creating start script. Default: false")
-	flag.IntVar(&Options.threads, "threads", Options.threads, "Number of threads to use for downloading. Default: cpucores * 2")
-	flag.BoolVar(&Options.integrityUpdate, "integrityUpdate", Options.integrityUpdate, "Whether changed files should be overwritten with fresh copies when updating. Most useful when used with Auto. Default: false")
-	flag.BoolVar(&Options.verbose, "verbose", Options.verbose, "Be a bit noisier on actions taken. Default: false")
-	flag.BoolVar(&Options.integrity, "integrity", Options.integrity, "Do a full integrity check. integrityUpdate assumed. Default: false")
-
-
-/*func initWindows() {
-	mode := uint32(0)
-	if err := windows.GetConsoleMode(windows.Stdout, &mode); err != nil {
-		return
-	}
-
-	mode = mode | windows.ENABLE_VIRTUAL_TERMINAL_PROCESSING
-	_ = windows.SetConsoleMode(windows.Stdout, mode)
-}*/
-
 func main() {
-	//initWindows() // todo: more work on making it look nice and work properly, and avoid doing it unless windows 10
 	filename := filepath.Base(os.Args[0])
 
 	Options.Auto = false
@@ -162,6 +142,8 @@ func main() {
 }
 
 func PrintUsage(filename string) {
+	err, modpackID, versionID := ParseFilename(filename)
+
 	println("                      _                  _              _     ")
 	println("                     | |                | |            | |    ")
 	println("  _ __ ___   ___   __| |_ __   __ _  ___| | _____   ___| |__  ")
@@ -171,14 +153,21 @@ func PrintUsage(filename string) {
 	println("                       | |                                    ")
 	println("                       |_|                                    ")
 	println(" modpacks.ch server downloader golang - build "+verStr)
+	println()
 	println("Usage:")
-	println("  " + filename + "<modpackid> <versionid> (depending on file name, and arguments)")
-
+	if err == nil {
+		fmt.Printf("  " + filename + " - without arguments will install modpack ID %d with version %d\n", modpackID, versionID)
+		fmt.Printf("  " + filename + " --latest - will install modpack ID %d with the latest version available\n", modpackID, versionID)
+	}
+	println("  " + filename + " <modpackid> <versionid> - will install the modpack specified by <modpackid> with the version specified by <versionid>")
+	println("  " + filename + " <modpackid> - will install the modpack specified by <modpackid> with the latest version available")
+	println()
+	println("Arguments:")
 
 	t := reflect.ValueOf(Options)
 	for i := 0; i < t.NumField(); i++ {
 		name := strings.ToLower(t.Type().Field(i).Name)
-		println("--" + name, "-", t.Type().Field(i).Tag.Get("help"))
+		println("  --" + name, "-", t.Type().Field(i).Tag.Get("help"))
 	}
 }
 
@@ -193,7 +182,9 @@ func HandleLaunch(file string, found int, versionFound int) {
 	err, modpackId, versionId := ParseFilename(file)
 	if err != nil {
 		if found == -1 {
-			log.Fatalf("Cannot locate modpack via filename: %v", err)
+			log.Printf("Cannot locate modpack via filename. Error: %v\n", err)
+			PrintUsage(file)
+			os.Exit(9001)
 		}
 	}
 
@@ -245,7 +236,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 	upgradeStr := ""
 
-	if (upgrade) {
+	if upgrade {
 		upgradeStr = " as an update"
 	}
 
@@ -561,8 +552,7 @@ func updateUI(responses []*grab.Response) {
 			} else {
 				succeeded++
 				fmt.Printf("Finished %s\n",
-					resp.Filename,
-					)
+					resp.Filename)
 			}
 			responses[i] = nil
 		}
