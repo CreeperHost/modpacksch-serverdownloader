@@ -27,8 +27,7 @@ var client = &http.Client{}
 const BaseAPIURL = "https://api.modpacks.ch/"
 const BaseModpackURL = BaseAPIURL + "public/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
-const BaseName = "serverinstall"
-const verStr = "202102041512"
+const verStr = "202120021356"
 var (
 	inProgress = 0
 	succeeded = 0
@@ -437,7 +436,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 }
 
 func ParseFilename(file string) (error, int, int) {
-	re := regexp.MustCompile("^" + BaseName + "_(\\d+)_(\\d+)")
+	re := regexp.MustCompile("^" + "\\w+" + "_(\\d+)_(\\d+)")
 	matched := re.FindStringSubmatch(file)
 	if len(matched) < 3 {
 		return errors.New("unable to parse filename: " + file), -1, -1
