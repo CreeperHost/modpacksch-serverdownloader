@@ -319,7 +319,7 @@ func (v VersionJson) GetLibraryDownloads() []Download {
 		}
 		if strings.Contains(artichoke.Filename, "forge-") {
 			continue
-		}
+		} // we've either already downloaded it or the forge installer will take care of it, not perfect but avoids errors
 		actualUrl, err := url.Parse(artichoke.Url)
 		if err != nil {
 			continue
