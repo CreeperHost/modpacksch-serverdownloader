@@ -27,7 +27,7 @@ var client = &http.Client{}
 const BaseAPIURL = "https://api.modpacks.ch/"
 const BaseModpackURL = BaseAPIURL + "public/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
-const verStr = "202120021356"
+const verStr = "202120021753"
 var (
 	inProgress = 0
 	succeeded = 0

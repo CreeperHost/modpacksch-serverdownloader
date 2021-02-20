@@ -171,7 +171,7 @@ const forgeUrlInstallJar = "https://apps.modpacks.ch/versions/net/minecraftforge
 const forgeUrlInstallJSON = "https://apps.modpacks.ch/versions/net/minecraftforge/forge/%s/forge-%s.json"
 
 func GetMirrors() []string {
-	return []string{"https://libraries.minecraft.net/", "https://apps.modpacks.ch/versions/", "https://files.minecraftforge.net/maven/"}
+	return []string{"https://libraries.minecraft.net/", "https://apps.modpacks.ch/versions/", "https://forge.modpacks.ch/maven/", "https://files.minecraftforge.net/maven/"}
 }
 
 func GetMirrorFor(urlStr string) string {
@@ -317,6 +317,9 @@ func (v VersionJson) GetLibraryDownloads() []Download {
 		if artichoke.Url == "" {
 			continue
 		}
+		if strings.Contains(artichoke.Filename, "forge-") {
+			continue
+		}
 		actualUrl, err := url.Parse(artichoke.Url)
 		if err != nil {
 			continue
@@ -325,7 +328,7 @@ func (v VersionJson) GetLibraryDownloads() []Download {
 		if len(artichoke.Hashes) > 0 {
 			hash = artichoke.Hashes[0]
 		}
-		downloads = append(downloads, Download{path.Join("libraries" + dir), *actualUrl, file, hash, path.Join("libraries", dir, file)})
+		downloads = append(downloads, Download{path.Join("libraries", dir), *actualUrl, file, hash, path.Join("libraries", dir, file)})
 	}
 	return downloads
 }
