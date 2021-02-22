@@ -285,11 +285,11 @@ func (f ForgeInstall) Install(installPath string) bool {
 
 func (f ForgeInstall) GetLaunchJar(installPath string) string {
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
 		return forgeJar
 	}
 	forgeJar =  fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
 		return forgeJar
 	}
 	return "insert-jar-here.jar"
