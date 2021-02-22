@@ -27,7 +27,7 @@ var client = &http.Client{}
 const BaseAPIURL = "https://api.modpacks.ch/"
 const BaseModpackURL = BaseAPIURL + "public/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
-const verStr = "202120021753"
+const verStr = "202122021721"
 var (
 	inProgress = 0
 	succeeded = 0
@@ -254,7 +254,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 		}
 
 		if info.ParentId != modpack.ID {
-			if !QuestionYN(true, "Previous modpack is different to this modpack\nWould you like to continue anyway? You should probably delete folders with mods and configs in it, first!", installPath, err) {
+			if !QuestionYN(true, "Previous modpack is different to this modpack\nWould you like to continue anyway? You should probably delete folders with mods and configs in it, first!") {
 				log.Fatalf("Aborting due to different modpack already installed")
 			}
 		}
@@ -430,6 +430,8 @@ func HandleLaunch(file string, found int, versionFound int) {
 	if !Options.Noscript {
 		versionInfo.WriteStartScript(installPath, ml)
 	}
+
+	log.Printf("Installed!")
 
 	// return the number of failed downloads as exit code
 	os.Exit(0)

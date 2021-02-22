@@ -90,10 +90,21 @@ type ForgeUniversal struct {
 func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	log.Println("Getting downloads for Forge Universal")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	versionStrOther := fmt.Sprintf(versionFmtOther, f.Version.Minecraft.RawVersion, f.Version.RawVersion, f.Version.Minecraft.RawVersion)
 	universalName := fmt.Sprintf("forge-%s-universal.jar", versionStr)
+	universalNameOther := fmt.Sprintf("forge-%s-universal.jar", versionStrOther)
 	forgeUrl := fmt.Sprintf(forgeUrlUniversalJar, versionStr, universalName)
+	forgeUrlOther := fmt.Sprintf(forgeUrlUniversalJar, versionStrOther, universalNameOther)
 	forgeUrlJSON := fmt.Sprintf(forgeUrlInstallJSON, versionStr, versionStr)
+	forgeUrlJSONOther := fmt.Sprintf(forgeUrlInstallJSON, versionStrOther, versionStrOther)
 	var rawForgeJSON []byte
+	if !FileOnServer(forgeUrlJSON) {
+		forgeUrlJSON = forgeUrlJSONOther
+	}
+	if !FileOnServer(forgeUrl) {
+		forgeUrl = forgeUrlOther
+		universalName = universalNameOther
+	}
 	if !FileOnServer(forgeUrlJSON) {
 		resp, err := grab.Get(installPath, forgeUrl)
 		if err != nil {
@@ -152,18 +163,22 @@ func (f ForgeUniversal) Install(installPath string) bool {
 
 func (f ForgeUniversal) GetLaunchJar(installPath string) string {
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
 		return forgeJar
 	}
 	forgeJar =  fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err != nil {
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+		return forgeJar
+	}
+	forgeJar =  fmt.Sprintf("forge-%s-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion, f.Version.Minecraft.RawVersion)
+	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
 		return forgeJar
 	}
 	return "insert-jar-here.jar"
 }
 
 const versionFmt = "%s-%s"
-const versionFmtOther = "%s-%s"
+const versionFmtOther = "%s-%s-%s"
 //const forgeUrlMergeJar
 const universalNameFmt = "forge-%s-%s-%s-universal"
 const forgeUrlUniversalJar = "https://apps.modpacks.ch/versions/net/minecraftforge/forge/%s/%s"
