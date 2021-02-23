@@ -205,7 +205,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
 			"pause"
 			filename += ".bat"
 	} else {
-		script = "#!/bin/bash\n" +
+		script = "#!/bin/sh\n" +
 		"if ! grep -q \"eula=true\" eula.txt; then\n" +
 		"    echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n" +
 		"    read  -n 1 -p \"[y/n] \" EULA\n" +
