@@ -91,3 +91,10 @@ sed -i "s/${COMMIT}/{{COMMITHASH}}/" main.go
 end=`date +%s`
 taken=$((end-start))
 echo "Built for ${builds} platforms in ${taken} seconds."
+
+if [[ "$#" -gt 0 ]]; then
+	if [ $1 == "--sign" ]; then
+		signtool sign /tr http://timestamp.digicert.com /td sha256 /fd sha256 /n "CreeperHost LTD" "out/${COMMIT: -5}/amd64/windows.exe"
+		signtool sign /as /tr http://timestamp.digicert.com /td sha1 /fd sha1 /n "CreeperHost LTD" "out/${COMMIT: -5}/amd64/windows.exe"
+	fi
+fi
