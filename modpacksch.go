@@ -173,7 +173,7 @@ func (v VersionInfo) WriteJson(installPath string) bool {
 
 	defer resp.Body.Close()
 
-	return ioutil.WriteFile(path.Join(installPath, "version.json"), stringRet, 644) == nil
+	return ioutil.WriteFile(path.Join(installPath, "version.json"), stringRet, 0644) == nil
 }
 
 func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {

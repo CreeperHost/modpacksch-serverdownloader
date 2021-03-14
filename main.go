@@ -27,7 +27,9 @@ var client = &http.Client{}
 const BaseAPIURL = "https://api.modpacks.ch/"
 const BaseModpackURL = BaseAPIURL + "public/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
-const verStr = "202122021721"
+const verStr = "{{BUILDNAME}}"
+const commitStr = "{{COMMITHASH}}"
+
 var (
 	inProgress = 0
 	succeeded = 0
@@ -152,6 +154,7 @@ func PrintUsage(filename string) {
 	println("                       | |                                    ")
 	println("                       |_|                                    ")
 	println(" modpacks.ch server downloader golang - build "+verStr)
+	println(" based on commit "+commitStr)
 	println()
 	println("Usage:")
 	if err == nil {
@@ -207,7 +210,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 	}
 	if _, err := os.Stat(installPath); os.IsNotExist(err) {
 		LogIfVerbose("Making folder %s\n", installPath)
-		if err := os.MkdirAll(installPath, os.FileMode(755)); err != nil {
+		if err := os.MkdirAll(installPath, os.FileMode(0755)); err != nil {
 			log.Fatalf("An error occured whilst creating the folder %s: %v", installPath, err)
 		}
 	} else {
