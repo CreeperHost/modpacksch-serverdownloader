@@ -1,8 +1,5 @@
 default:
   image: golang:1.9
-  before_script:
-    - go get github.com/cavaliercoder/grab
-    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
 
 before_script:
   - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
@@ -12,6 +9,8 @@ build_windows:
     GOOS: "windows"
     GOARCH: "amd64"
   script:
+    - go get github.com/cavaliercoder/grab
+    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
     - go build -o $GOOS-$GOARCH.exe
@@ -23,6 +22,8 @@ build_linux_amd64:
     GOOS: "linux"
     GOARCH: "amd64"
   script:
+    - go get github.com/cavaliercoder/grab
+    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
     - go build -o $GOOS-$GOARCH
@@ -34,6 +35,8 @@ build_freebsd_amd64:
     GOOS: "freebsd"
     GOARCH: "amd64"
   script:
+    - go get github.com/cavaliercoder/grab
+    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
     - go build -o $GOOS-$GOARCH
@@ -45,6 +48,8 @@ build_darwin_amd64:
     GOOS: "darwin"
     GOARCH: "amd64"
   script:
+    - go get github.com/cavaliercoder/grab
+    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
     - go build -o $GOOS-$GOARCH
@@ -56,6 +61,8 @@ build_linux_arm64:
     GOOS: "linux"
     GOARCH: "arm64"
   script:
+    - go get github.com/cavaliercoder/grab
+    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
     - go build -o $GOOS-$GOARCH
@@ -67,6 +74,8 @@ build_freebsd_arm64:
     GOOS: "freebsd"
     GOARCH: "arm64"
   script:
+    - go get github.com/cavaliercoder/grab
+    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
     - go build -o $GOOS-$GOARCH
@@ -77,6 +86,8 @@ build_darwin_arm64:
     GOOS: "darwin"
     GOARCH: "arm64"
   script:
+    - go get github.com/cavaliercoder/grab
+    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
     - go build -o $GOOS-$GOARCH
