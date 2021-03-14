@@ -6,7 +6,7 @@ VERBASE=`date "+%Y%m%d%H%M"`
 REPOHASH=`cat .git/HEAD | awk '{print $2}'`
 COMMIT=`cat .git/$REPOHASH`
 echo "Building commit ${COMMIT} as version ${VERBASE}"
-mkdir -p out/$VERBASE
+mkdir -p out/${COMMIT: -5}
 
 sed -i "s/{{COMMITHASH}}/${COMMIT}/" main.go
 
@@ -16,7 +16,7 @@ env GOOS=${GOOS} GOARCH=${GOARCH} > /dev/null 2>&1
 VER="${VERBASE}-${GOOS}-${GOARCH}"
 sed -i "s/{{BUILDNAME}}/${VER}/" main.go
 OUTPUT="out/${COMMIT: -5}/$GOARCH/$GOOS"
-go build -o $OUTPUT
+go build -o $OUTPUT.exe
 ((builds=builds+1))
 echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
 
