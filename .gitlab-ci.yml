@@ -2,8 +2,10 @@ default:
   image: golang:1.9
   before_script:
     - go get github.com/cavaliercoder/grab
-    - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
     - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
+
+before_script:
+  - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
 
 build_windows:
   variables:
