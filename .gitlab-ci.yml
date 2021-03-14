@@ -2,7 +2,7 @@ default:
   image: golang:1.9
   before_script:
     - go get github.com/cavaliercoder/grab
-    - export VERBASE=`date "+%Y%m%d%H%M"`
+    - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
     - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
 
 stages:
@@ -16,8 +16,8 @@ build_windows:
   script:
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOARCH-$GOOS.exe
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}.exe" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${CI_CIMMIT_SHA: -5}/serverinstaller-${GOOS}-${GOARCH}.exe"'
+    - go build -o $GOOS-$GOARCH.exe
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}.exe" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}.exe"'
 
 
 build_linux_amd64:
@@ -29,7 +29,7 @@ build_linux_amd64:
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
     - go build -o $GOOS-$GOARCH
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${CI_CIMMIT_SHA: -5}/serverinstaller-${GOOS}-${GOARCH}"'
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
 
 
 build_freebsd_amd64:
@@ -40,8 +40,8 @@ build_freebsd_amd64:
   script:
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOARCH-$GOOS
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${CI_CIMMIT_SHA: -5}/serverinstaller-${GOOS}-${GOARCH}"'
+    - go build -o $GOOS-$GOARCH
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
 
 
 build_darwin_amd64:
@@ -52,8 +52,8 @@ build_darwin_amd64:
   script:
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOARCH-$GOOS
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${CI_CIMMIT_SHA: -5}/serverinstaller-${GOOS}-${GOARCH}"'
+    - go build -o $GOOS-$GOARCH
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
 
 
 build_linux_arm64:
@@ -64,8 +64,8 @@ build_linux_arm64:
   script:
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOARCH-$GOOS
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${CI_CIMMIT_SHA: -5}/serverinstaller-${GOOS}-${GOARCH}"'
+    - go build -o $GOOS-$GOARCH
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
 
 
 build_freebsd_arm64:
@@ -76,8 +76,8 @@ build_freebsd_arm64:
   script:
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOARCH-$GOOS
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${CI_CIMMIT_SHA: -5}/serverinstaller-${GOOS}-${GOARCH}"'
+    - go build -o $GOOS-$GOARCH
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
 
 build_darwin_arm64:
   stage: build
@@ -87,5 +87,5 @@ build_darwin_arm64:
   script:
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOARCH-$GOOS
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${CI_CIMMIT_SHA: -5}/serverinstaller-${GOOS}-${GOARCH}"'
+    - go build -o $GOOS-$GOARCH
+    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
