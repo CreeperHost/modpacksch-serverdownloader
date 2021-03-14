@@ -1,0 +1,93 @@
+#!/bin/bash
+start=`date +%s`
+builds=0
+go get github.com/cavaliercoder/grab
+VERBASE=`date "+%Y%m%d%H%M"`
+REPOHASH=`cat .git/HEAD | awk '{print $2}'`
+COMMIT=`cat .git/$REPOHASH`
+echo "Building commit ${COMMIT} as version ${VERBASE}"
+mkdir -p out/$VERBASE
+
+sed -i "s/{{COMMITHASH}}/${COMMIT}/" main.go
+
+GOOS="windows"
+GOARCH="amd64"
+env GOOS=${GOOS} GOARCH=${GOARCH} > /dev/null 2>&1
+VER="${VERBASE}-${GOOS}-${GOARCH}"
+sed -i "s/{{BUILDNAME}}/${VER}/" main.go
+OUTPUT="out/${COMMIT: -5}/$GOARCH/$GOOS"
+go build -o $OUTPUT
+((builds=builds+1))
+echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
+
+GOOS="linux"
+GOARCH="amd64"
+env GOOS=${GOOS} GOARCH=${GOARCH} > /dev/null 2>&1
+OLDVER="${VER}"
+VER="${VERBASE}-${GOOS}-${GOARCH}"
+sed -i "s/${OLDVER}/${VER}/" main.go
+OUTPUT="out/${COMMIT: -5}/$GOARCH/$GOOS"
+go build -o $OUTPUT
+((builds=builds+1))
+echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
+
+GOOS="freebsd"
+GOARCH="amd64"
+env GOOS=${GOOS} GOARCH=${GOARCH} > /dev/null 2>&1
+OLDVER="${VER}"
+VER="${VERBASE}-${GOOS}-${GOARCH}"
+sed -i "s/${OLDVER}/${VER}/" main.go
+OUTPUT="out/${COMMIT: -5}/$GOARCH/$GOOS"
+go build -o $OUTPUT
+((builds=builds+1))
+echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
+
+GOOS="darwin"
+GOARCH="amd64"
+env GOOS=${GOOS} GOARCH=${GOARCH} > /dev/null 2>&1
+OLDVER="${VER}"
+VER="${VERBASE}-${GOOS}-${GOARCH}"
+sed -i "s/${OLDVER}/${VER}/" main.go
+OUTPUT="out/${COMMIT: -5}/$GOARCH/$GOOS"
+go build -o $OUTPUT
+((builds=builds+1))
+echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
+
+GOOS="linux"
+GOARCH="arm64"
+env GOOS=${GOOS} GOARCH=${GOARCH} > /dev/null 2>&1
+OLDVER="${VER}"
+VER="${VERBASE}-${GOOS}-${GOARCH}"
+sed -i "s/${OLDVER}/${VER}/" main.go
+OUTPUT="out/${COMMIT: -5}/$GOARCH/$GOOS"
+go build -o $OUTPUT
+((builds=builds+1))
+echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
+
+GOOS="freebsd"
+GOARCH="arm64"
+env GOOS=${GOOS} GOARCH=${GOARCH} > /dev/null 2>&1
+OLDVER="${VER}"
+VER="${VERBASE}-${GOOS}-${GOARCH}"
+sed -i "s/${OLDVER}/${VER}/" main.go
+OUTPUT="out/${COMMIT: -5}/$GOARCH/$GOOS"
+go build -o $OUTPUT
+((builds=builds+1))
+echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
+
+GOOS="darwin"
+GOARCH="arm64"
+env GOOS=${GOOS} GOARCH=${GOARCH} > /dev/null 2>&1
+OLDVER="${VER}"
+VER="${VERBASE}-${GOOS}-${GOARCH}"
+sed -i "s/${OLDVER}/${VER}/" main.go
+OUTPUT="out/${COMMIT: -5}/$GOARCH/$GOOS"
+go build -o $OUTPUT
+((builds=builds+1))
+echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
+
+sed -i "s/${VER}/{{BUILDNAME}}/" main.go
+sed -i "s/${COMMIT}/{{COMMITHASH}}/" main.go
+end=`date +%s`
+taken=$((end-start))
+echo "Built for ${builds} platforms in ${taken} seconds."
