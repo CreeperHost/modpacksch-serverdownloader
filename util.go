@@ -6,11 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
+	"reflect"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -59,7 +63,7 @@ func Question(def string, choices []string, fixed bool, s string, fmtArgs ...int
 		choicesFmt = fmt.Sprintf("[%v]", def)
 	}
 
-	fmt.Println(fmt.Sprintf(s, fmtArgs...) + fmt.Sprintf(" " + choicesFmt, choicesInt...))
+	fmt.Println(fmt.Sprintf(s, fmtArgs...) + fmt.Sprintf(" "+choicesFmt, choicesInt...))
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
 	response := scanner.Text()
@@ -84,7 +88,7 @@ func Question(def string, choices []string, fixed bool, s string, fmtArgs ...int
 	return response
 }
 
-func (m* Minecraft) Parse() error {
+func (m *Minecraft) Parse() error {
 	splitVer := strings.Split(m.RawVersion, ".")
 	if len(splitVer) == 0 {
 		return errors.New(fmt.Sprintf("minecraft Version does not match expected format: %s", m.RawVersion))
@@ -163,7 +167,7 @@ type VanillaListManifest struct {
 }
 
 type VanillaVersion struct {
-	ID string `json:"id"`
+	ID  string `json:"id"`
 	URL string `json:"url"`
 }
 
@@ -171,7 +175,7 @@ type VanillaManifest struct {
 	Downloads struct {
 		Server struct {
 			SHA1 string
-			URL string
+			URL  string
 		} `json:"server"`
 	} `json:"downloads"`
 }
@@ -186,7 +190,7 @@ func (m Minecraft) GetVanillaVersion() (VanillaVersion, error) {
 			var manifest VanillaListManifest
 			err := json.Unmarshal(bytes, &manifest)
 			if err == nil {
-				Stuff:
+			Stuff:
 				for _, v := range manifest.Versions {
 					if v.ID == m.RawVersion {
 						ret = v
@@ -211,10 +215,104 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 			if err == nil {
 				URL, err := url.Parse(vanillaManifest.Downloads.Server.URL)
 				if err == nil {
-					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", vanillaManifest.Downloads.Server.SHA1, path.Join("", "minecraft_server." + v.ID + ".jar")}
+					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", vanillaManifest.Downloads.Server.SHA1, path.Join("", "minecraft_server."+v.ID+".jar")}
 				}
 			}
 		}
 	}
 	return ret, err
+}
+
+func mergeZips(zips []string, destzip string, deleteAfter bool) {
+	zipfile, err := os.Create(destzip)
+	if err != nil {
+		log.Printf("Error opening %s for writing - running server may not work properly: %v\n", destzip, err)
+	}
+	buf := bufio.NewWriter(zipfile)
+	w := zip.NewWriter(buf)
+
+	reverseAny(zips)
+
+	storedFiles := make(map[string]bool)
+
+	for _, file := range zips {
+		r, err := zip.OpenReader(file)
+		if err != nil {
+			log.Printf("Error opening %s to merge into %s\n", file, destzip)
+			continue
+		}
+
+		for _, f := range r.File {
+			if !storedFiles[f.Name] {
+				storedFiles[f.Name] = true
+				rc, err := f.Open()
+				if err != nil {
+					log.Printf("Error writing %s from %s to %s:%v\n", f.Name, file, destzip, err)
+					continue
+				}
+				wc, _ := w.Create(f.Name)
+
+				_, err = io.Copy(wc, rc)
+
+				rc.Close()
+
+				if err != nil {
+					log.Printf("Error writing %s from %s to %s:%v\n", f.Name, file, destzip, err)
+				}
+			}
+		}
+
+		r.Close()
+
+		if deleteAfter {
+			os.Remove(file)
+
+			dir := path.Dir(file)
+			files := listDirectories([]string{dir})
+			if len(files) == 0 {
+				os.Remove(dir)
+			}
+		}
+	}
+
+	w.Close()
+	zipfile.Close()
+
+}
+
+func reverseAny(s interface{}) {
+	n := reflect.ValueOf(s).Len()
+	swap := reflect.Swapper(s)
+	for i, j := 0, n-1; i < j; i, j = i+1, j-1 {
+		swap(i, j)
+	}
+}
+
+func listDirectories(directories []string) []string {
+	var directoryReturn []string
+	var allFiles []ourFileInfo
+	for _, dirname := range directories {
+		f, err := os.Open(dirname)
+		if err != nil {
+			continue
+		}
+		list, err := f.Readdir(-1)
+		f.Close()
+		if err != nil {
+			continue
+		}
+		for _, file := range list {
+			allFiles = append(allFiles, ourFileInfo{file, dirname})
+		}
+	}
+
+	sort.Slice(allFiles, func(i, j int) bool { return allFiles[i].Name() < allFiles[j].Name() })
+
+	directoryReturn = make([]string, len(allFiles))
+
+	for i, file := range allFiles {
+		directoryReturn[i] = path.Join(file.directory, file.Name())
+	}
+
+	return directoryReturn
 }

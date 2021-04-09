@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cavaliercoder/grab"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -20,6 +19,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/cavaliercoder/grab"
 )
 
 var client = &http.Client{}
@@ -32,20 +33,20 @@ const commitStr = "{{COMMITHASH}}"
 
 var (
 	inProgress = 0
-	succeeded = 0
-	failed = 0
+	succeeded  = 0
+	failed     = 0
 )
 
 var Options struct {
-	Auto            bool    `help:"Ask no questions, use defaults."`
-	Path            string  `help:"Directory to install in. Default: current directory"`
-	Noscript        bool    `help:"Skip creating start script. Default: false"`
-	Threads         int     `help:"Number of threads to use for downloading. Default: cpucores * 2"`
-	Integrityupdate bool    `help:"Whether changed files should be overwritten with fresh copies when updating. Most useful when used with Auto. Default: false\n    Example: You changed config/test.cfg on your server from default. The modpack updates config/test.cfg - with this flag, it will assume you wish to overwrite with the latest version"`
-	Integrity       bool    `help:"Do a full integrity check, even on files not changed by the update. integrityupdate assumed. Default: false"`
-	Verbose         bool    `help:"Be a bit noisier on actions taken. Default: false"`
-	Latest          bool    `help:"Install latest, ignoring any version in the file name or arguments. Default: false"`
-	Help            bool    `help:"This help"`
+	Auto            bool   `help:"Ask no questions, use defaults."`
+	Path            string `help:"Directory to install in. Default: current directory"`
+	Noscript        bool   `help:"Skip creating start script. Default: false"`
+	Threads         int    `help:"Number of threads to use for downloading. Default: cpucores * 2"`
+	Integrityupdate bool   `help:"Whether changed files should be overwritten with fresh copies when updating. Most useful when used with Auto. Default: false\n    Example: You changed config/test.cfg on your server from default. The modpack updates config/test.cfg - with this flag, it will assume you wish to overwrite with the latest version"`
+	Integrity       bool   `help:"Do a full integrity check, even on files not changed by the update. integrityupdate assumed. Default: true"`
+	Verbose         bool   `help:"Be a bit noisier on actions taken. Default: false"`
+	Latest          bool   `help:"Install latest, ignoring any version in the file name or arguments. Default: false"`
+	Help            bool   `help:"This help"`
 }
 
 func main() {
@@ -153,13 +154,13 @@ func PrintUsage(filename string) {
 	println(" |_| |_| |_|\\___/ \\__,_| .__/ \\__,_|\\___|_|\\_\\___(_)___|_| |_|")
 	println("                       | |                                    ")
 	println("                       |_|                                    ")
-	println(" modpacks.ch server downloader golang - build "+verStr)
-	println(" based on commit "+commitStr)
+	println(" modpacks.ch server downloader golang - build " + verStr)
+	println(" based on commit " + commitStr)
 	println()
 	println("Usage:")
 	if err == nil {
-		fmt.Printf("  " + filename + " - without arguments will install modpack ID %d with version %d\n", modpackID, versionID)
-		fmt.Printf("  " + filename + " --latest - will install modpack ID %d with the latest version available\n", modpackID, versionID)
+		fmt.Printf("  "+filename+" - without arguments will install modpack ID %d with version %d\n", modpackID, versionID)
+		fmt.Printf("  "+filename+" --latest - will install modpack ID %d with the latest version available\n", modpackID, versionID)
 	}
 	println("  " + filename + " <modpackid> <versionid> - will install the modpack specified by <modpackid> with the version specified by <versionid>")
 	println("  " + filename + " <modpackid> - will install the modpack specified by <modpackid> with the latest version available")
@@ -169,7 +170,7 @@ func PrintUsage(filename string) {
 	t := reflect.ValueOf(Options)
 	for i := 0; i < t.NumField(); i++ {
 		name := strings.ToLower(t.Type().Field(i).Name)
-		println("  --" + name, "-", t.Type().Field(i).Tag.Get("help"))
+		println("  --"+name, "-", t.Type().Field(i).Tag.Get("help"))
 	}
 }
 
@@ -214,7 +215,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 			log.Fatalf("An error occured whilst creating the folder %s: %v", installPath, err)
 		}
 	} else {
-		if !QuestionYN(true,"Path %s already exists - still want to install?", installPath) {
+		if !QuestionYN(true, "Path %s already exists - still want to install?", installPath) {
 			log.Fatalf("Aborted by user")
 		}
 
@@ -294,7 +295,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 						LogIfVerbose("Found changed file %s\n", newDown.FullPath)
 					} else if Options.Integrity {
 						LogIfVerbose("Checking integrity of file %s\n", newDown.FullPath)
-						if oldDown.VerifyChecksum(installPath) {
+						if !newDown.VerifyChecksum(installPath) {
 							integrityFailures = append(integrityFailures, oldDown)
 						}
 					}
@@ -333,11 +334,9 @@ func HandleLaunch(file string, found int, versionFound int) {
 		}
 
 		if len(integrityFailures) > 0 {
-			if len(failedChecksums) > 0 {
-				overwrite := QuestionYN(true, "There are %v failed checksums on already existing files. This may be as a result of manual config changes. Do you wish to overwrite them with the files from the update?", failedChecksums)
-				if overwrite {
-					changedFilesNew = append(changedFilesNew, integrityFailures...)
-				}
+			overwrite := QuestionYN(true, "There are %v failed checksums on already existing files. This may be as a result of manual config changes. Do you wish to overwrite them with the files from the update?", failedChecksums)
+			if overwrite {
+				changedFilesNew = append(changedFilesNew, integrityFailures...)
 			}
 		}
 
@@ -395,7 +394,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 	t := time.NewTicker(200 * time.Millisecond)
 	defer t.Stop()
 
-	Loop:
+Loop:
 	for {
 		select {
 		case resp := <-grabs:
@@ -414,8 +413,8 @@ func HandleLaunch(file string, found int, versionFound int) {
 		}
 	}
 
-	fmt.Printf(
-		"Finished %d successful, %d failed, %d incomplete.\n",
+	log.Printf(
+		"Downloaded %d successful, %d failed, %d incomplete.\n",
 		succeeded,
 		failed,
 		inProgress)
@@ -555,7 +554,7 @@ func updateUI(responses []*grab.Response) {
 					resp.Err())
 			} else {
 				succeeded++
-				fmt.Printf("Finished %s\n",
+				log.Printf("Downloaded %s\n",
 					resp.Filename)
 			}
 			responses[i] = nil

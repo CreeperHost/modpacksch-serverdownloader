@@ -61,16 +61,16 @@ type Specs struct {
 type VersionInfo struct {
 	*APIResponse
 	*Version
-	Files []File  `json:"files"`
-	ParentId int  `json:"parent"`
-	Targets []Target `json:"targets"`
-	RawJson string
+	Files    []File   `json:"files"`
+	ParentId int      `json:"parent"`
+	Targets  []Target `json:"targets"`
+	RawJson  string
 }
 
 type Target struct {
-	Name string    `json:"name"`
+	Name    string `json:"name"`
 	Version string `json:"Version"`
-	Type string    `json:"type"`
+	Type    string `json:"type"`
 }
 
 type File struct {
@@ -85,13 +85,12 @@ type File struct {
 }
 
 type Download struct {
-	Path string
-	URL url.URL
-	Name string
-	SHA1 string
+	Path     string
+	URL      url.URL
+	Name     string
+	SHA1     string
 	FullPath string
 }
-
 
 func GetModpack(id int) (error, Modpack) {
 	ret := Modpack{}
@@ -203,18 +202,18 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
 			":END\r\n" +
 			"java.exe " + launch + "\r\n" +
 			"pause"
-			filename += ".bat"
+		filename += ".bat"
 	} else {
 		script = "#!/bin/sh\n" +
-		"if ! grep -q \"eula=true\" eula.txt; then\n" +
-		"    echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n" +
-		"    read  -n 1 -p \"[y/n] \" EULA\n" +
-		"    if [ \"$EULA\" = \"y\" ]; then\n" +
-		"        echo \"eula=true\" > eula.txt\n" +
-		"        echo\n" +
-		"    fi\n" +
-		"fi\n" +
-		"java " + launch
+			"if ! grep -q \"eula=true\" eula.txt; then\n" +
+			"    echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n" +
+			"    read  -n 1 -p \"[y/n] \" EULA\n" +
+			"    if [ \"$EULA\" = \"y\" ]; then\n" +
+			"        echo \"eula=true\" > eula.txt\n" +
+			"        echo\n" +
+			"    fi\n" +
+			"fi\n" +
+			"java " + launch
 		filename += ".sh"
 	}
 	if err := ioutil.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
@@ -242,7 +241,7 @@ func (d Download) VerifyChecksum(installPath string) bool {
 
 	f, err := os.Open(filename)
 	if err != nil {
-		return true
+		return false
 	}
 	defer f.Close()
 	if _, err := io.Copy(hasher, f); err != nil {
