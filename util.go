@@ -190,11 +190,10 @@ func (m Minecraft) GetVanillaVersion() (VanillaVersion, error) {
 			var manifest VanillaListManifest
 			err := json.Unmarshal(bytes, &manifest)
 			if err == nil {
-			Stuff:
 				for _, v := range manifest.Versions {
 					if v.ID == m.RawVersion {
 						ret = v
-						break Stuff
+						break
 					}
 				}
 			}
@@ -223,7 +222,7 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 	return ret, err
 }
 
-func mergeZips(zips []string, destzip string, deleteAfter bool) {
+func mergeZips(zips []string, destzip string, deleteAfter bool, mainClass string) {
 	zipfile, err := os.Create(destzip)
 	if err != nil {
 		log.Printf("Error opening %s for writing - running server may not work properly: %v\n", destzip, err)
@@ -235,6 +234,8 @@ func mergeZips(zips []string, destzip string, deleteAfter bool) {
 
 	storedFiles := make(map[string]bool)
 
+	services := make(map[string][]string)
+
 	for _, file := range zips {
 		r, err := zip.OpenReader(file)
 		if err != nil {
@@ -243,7 +244,39 @@ func mergeZips(zips []string, destzip string, deleteAfter bool) {
 		}
 
 		for _, f := range r.File {
-			if !storedFiles[f.Name] {
+			if strings.HasPrefix(f.Name, "META-INF/services/") && !strings.HasSuffix(f.Name, "/") {
+				rc, err := f.Open()
+				if err != nil {
+					log.Printf("Error reading %s from %s to add services definition:%v\n", f.Name, file, err)
+					continue
+				}
+
+				scanner := bufio.NewScanner(rc)
+
+				for scanner.Scan() {
+					line := scanner.Text()
+					pos := strings.IndexByte(line, '#')
+					if pos >= 0 {
+						line = line[:pos]
+					}
+
+					line = strings.TrimSpace(line)
+
+					if len(line) > 0 {
+						prev, ok := services[f.Name]
+						var arr []string
+						if ok {
+							arr = prev
+						} else {
+							arr = make([]string, 0)
+						}
+
+						services[f.Name] = append(arr, line)
+					}
+				}
+
+				rc.Close()
+			} else if !storedFiles[f.Name] && !(len(mainClass) > 0 && f.Name == "META-INF/MANIFEST.MF") {
 				storedFiles[f.Name] = true
 				rc, err := f.Open()
 				if err != nil {
@@ -273,6 +306,30 @@ func mergeZips(zips []string, destzip string, deleteAfter bool) {
 				os.Remove(dir)
 			}
 		}
+	}
+
+	for serviceName, lines := range services {
+		fileContents := ""
+		for _, line := range lines {
+			fileContents += line + "\n"
+		}
+
+		wc, _ := w.Create(serviceName)
+
+		wc.Write([]byte(fileContents))
+	}
+
+	if len(mainClass) != 0 {
+		wc, _ := w.Create("META-INF/MANIFEST.MF")
+		fileContents :=
+			"Manifest-Version: 1.0\n" +
+				"Main-Class: net.fabricmc.loader.launch.server.FabricServerLauncher\n"
+
+		wc.Write([]byte(fileContents))
+
+		wc, _ = w.Create("fabric-server-launch.properties")
+
+		wc.Write([]byte("launch.mainClass=" + mainClass + "\n"))
 	}
 
 	w.Close()
@@ -315,4 +372,18 @@ func listDirectories(directories []string) []string {
 	}
 
 	return directoryReturn
+}
+
+func getOrBlank(URL string) string {
+	resp, err := http.Get(URL)
+	if err != nil {
+		return ""
+	}
+
+	defer resp.Body.Close()
+	bytesRead, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return ""
+	}
+	return string(bytesRead)
 }

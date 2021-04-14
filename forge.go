@@ -401,7 +401,7 @@ func (f ForgeInJar) Install(installPath string) bool {
 
 	mergeJars = append(mergeJars, jarMods...)
 
-	mergeZips(mergeJars, path.Join(installPath, serverName), true)
+	mergeZips(mergeJars, path.Join(installPath, serverName), true, "")
 
 	return true
 }

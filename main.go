@@ -475,8 +475,14 @@ func (v VersionInfo) GetModLoader() (error, ModLoader) {
 		log.Fatalf("Error parsing Version: %v", err)
 	}
 
+	if len(modLoader.Name) == 0 {
+		return nil, mc
+	}
+
 	if modLoader.Name == "forge" {
 		return GetForge(modLoader, mc)
+	} else if modLoader.Name == "fabric" {
+		return GetFabric(modLoader, mc)
 	}
 	return errors.New(fmt.Sprintf("Unable to locate Mod Loader for %s %s %s", modLoader.Name, modLoader.Version, mc.RawVersion)), ret
 }
@@ -526,7 +532,11 @@ func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Resp
 
 	reqs := make([]*grab.Request, len(downloads))
 	for i := 0; i < len(downloads); i++ {
-		req, err := grab.NewRequest(path.Join(dst, downloads[i].Path, downloads[i].Name), downloads[i].URL.String())
+		tmpPath := downloads[i].Path
+		if !filepath.IsAbs(tmpPath) {
+			tmpPath = path.Join(dst, tmpPath)
+		}
+		req, err := grab.NewRequest(path.Join(tmpPath, downloads[i].Name), downloads[i].URL.String())
 		if err != nil {
 			return nil, err
 		}
