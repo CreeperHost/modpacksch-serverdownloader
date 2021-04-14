@@ -1,5 +1,5 @@
 default:
-  image: golang:1.9
+  image: golang:1.16
 
 before_script:
   - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
