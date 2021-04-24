@@ -96,6 +96,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	universalName := fmt.Sprintf("forge-%s-universal.jar", versionStr)
 	universalNameOther := fmt.Sprintf("forge-%s-universal.jar", versionStrOther)
 	forgeUrl := fmt.Sprintf(forgeUrlUniversalJar, versionStr, universalName)
+	forgeUrl = GetMirrorFor(forgeUrl, "https://apps.modpacks.ch/versions/")
 	forgeUrlOther := fmt.Sprintf(forgeUrlUniversalJar, versionStrOther, universalNameOther)
 	forgeUrlJSON := fmt.Sprintf(forgeUrlInstallJSON, versionStr, versionStr)
 	forgeUrlJSONOther := fmt.Sprintf(forgeUrlInstallJSON, versionStrOther, versionStrOther)
@@ -188,22 +189,7 @@ const forgeUrlInstallJar = "https://apps.modpacks.ch/versions/net/minecraftforge
 const forgeUrlInstallJSON = "https://apps.modpacks.ch/versions/net/minecraftforge/forge/%s/forge-%s.json"
 
 func GetMirrors() []string {
-	return []string{"https://libraries.minecraft.net/", "https://forge.modpacks.ch/maven/", "https://apps.modpacks.ch/versions/", "https://files.minecraftforge.net/maven/"}
-}
-
-func GetMirrorFor(urlStr string) string {
-	mirrors := GetMirrors()
-	var actualUrlStr string
-	baseUrlStr := strings.Replace(urlStr, "https://files.minecraftforge.net/maven/", "", 1)
-	baseUrlStr = strings.Replace(baseUrlStr, "https://apps.modpacks.ch/versions/", "", 1)
-Out:
-	for _, mirror := range mirrors {
-		actualUrlStr = mirror + baseUrlStr
-		if FileOnServer(actualUrlStr) {
-			break Out
-		}
-	}
-	return actualUrlStr
+	return []string{"https://maven.creeperhost.net/", "https://libraries.minecraft.net/", "https://forge.modpacks.ch/maven/", "https://apps.modpacks.ch/versions/", "https://maven.creeperhost.net/"}
 }
 
 type ForgeInstall struct {
@@ -316,7 +302,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 		serverName = fmt.Sprintf("forge-%s-server.zip", versionStr)
 	}
 	forgeUrl := fmt.Sprintf(forgeUrlUniversalJar, versionStr, serverName)
-	forgeUrl = GetMirrorFor(forgeUrl)
+	forgeUrl = GetMirrorFor(forgeUrl, "https://maven.minecraftforge.net/")
 
 	URL, err := url.Parse(forgeUrl)
 	if err != nil {
@@ -354,7 +340,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 	downloads := []Download{serverDownload, {"", *URL, serverName, "", path.Join("", serverName)}}
 
 	for libUrl, sha1 := range libs {
-		libUrl := GetMirrorFor(libUrl)
+		libUrl := GetMirrorFor(libUrl, "https://maven.minecraftforge.net/")
 		URL, err := url.Parse(libUrl)
 		if err != nil {
 			if err != nil {
@@ -469,7 +455,7 @@ func (v *VersionLibrary) UnmarshalJSON(data []byte) error {
 	filename := split[1] + "-" + split[2] + ".jar"
 	pathTemp := strings.Replace(split[0], ".", "/", -1) + "/" + split[1] + "/" + split[2]
 
-	v.Url = GetMirrorFor(pathTemp + "/" + filename)
+	v.Url = GetMirrorFor(pathTemp+"/"+filename, "https://maven.minecraftforge.net/")
 	v.Filename = filename
 	v.Path = pathTemp
 	return nil

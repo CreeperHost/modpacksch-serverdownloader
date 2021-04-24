@@ -76,7 +76,8 @@ func (f Fabric) GetDownloads(installPath string) []Download {
 	meta := f.getMeta()
 	homeDir := getFabricHomeDir()
 	for _, library := range meta.Libraries {
-		mavenURL, filename := getMavenUrl(library.URL, library.Name)
+		mavenURL, filename := getMavenUrl(library.Name)
+		mavenURL = GetMirrorFor(mavenURL, library.URL)
 		sha1URL := mavenURL + ".sha1"
 		sha1 := getOrBlank(sha1URL)
 
@@ -134,7 +135,7 @@ func GetFabric(modloader Target, mc Minecraft) (error, ModLoader) {
 	return nil, fab
 }
 
-func getMavenUrl(baseURL string, artifact string) (string, string) {
+func getMavenUrl(artifact string) (string, string) {
 	split := strings.Split(artifact, ":")
 	packge := split[0]
 	thing := split[1] // I can't remember the name, ok
@@ -144,7 +145,7 @@ func getMavenUrl(baseURL string, artifact string) (string, string) {
 
 	packgeURL := strings.Replace(packge, ".", "/", -1)
 
-	jarURL := fmt.Sprintf("%s%s/%s/%s/%s-%s.jar", baseURL, packgeURL, thingEscaped, versionEscaped, thing, version)
+	jarURL := fmt.Sprintf("%s/%s/%s/%s-%s.jar", packgeURL, thingEscaped, versionEscaped, thing, version)
 
 	filename := fmt.Sprintf("%s-%s.jar", thing, version)
 
