@@ -215,8 +215,6 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 		bytes, err := UnzipFileToMemory(path.Join(installPath, installerName), "version.json")
 		if err == nil {
 			rawForgeJSON = bytes
-		} else {
-			return []Download{} // Unable to get other downloads. Womp womp. Will let installer do it.
 		}
 	} else {
 		resp, err := http.Get(forgeUrlJSON)
