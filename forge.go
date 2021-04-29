@@ -203,6 +203,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 	forgeUrl := fmt.Sprintf(forgeUrlInstallJar, versionStr, installerName)
 	forgeUrlJSON := fmt.Sprintf(forgeUrlInstallJSON, versionStr, versionStr)
 	var rawForgeJSON []byte
+	var rawForgeInstallJSON []byte
 	if !FileOnServer(forgeUrlJSON) {
 		resp, err := grab.Get(installPath, forgeUrl)
 		if err != nil {
@@ -211,7 +212,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 		if resp.IsComplete() {
 			resp.Wait()
 		}
-		bytes, err := UnzipFileToMemory(path.Join(installPath, installerName+".jar"), "version.json")
+		bytes, err := UnzipFileToMemory(path.Join(installPath, installerName), "version.json")
 		if err == nil {
 			rawForgeJSON = bytes
 		} else {
@@ -228,15 +229,29 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 		}
 	}
 
+	bytes, err := UnzipFileToMemory(path.Join(installPath, installerName), "version.json")
+	if err == nil {
+		rawForgeInstallJSON = bytes
+	} else {
+		return []Download{} // Unable to get other downloads. Womp womp. Will let installer do it.
+	}
+
 	URL, err := url.Parse(forgeUrl)
 	if err != nil {
 		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
-	downloads := []Download{{"", *URL, installerName + ".jar", "", path.Join("", installerName+".jar")}}
+	downloads := []Download{{"", *URL, installerName, "", path.Join("", installerName+".jar")}}
 
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJsonFG3{}
 		err := json.Unmarshal(rawForgeJSON, &versionForge)
+		if err == nil {
+			downloads = append(downloads, versionForge.GetDownloads()...)
+		}
+	}
+	if len(rawForgeInstallJSON) > 0 {
+		versionForge := VersionJsonFG3{}
+		err := json.Unmarshal(rawForgeInstallJSON, &versionForge)
 		if err == nil {
 			downloads = append(downloads, versionForge.GetDownloads()...)
 		}
