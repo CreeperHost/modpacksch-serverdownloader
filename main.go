@@ -26,7 +26,7 @@ import (
 var client = &http.Client{}
 
 const BaseAPIURL = "https://api.modpacks.ch/"
-const BaseModpackURL = BaseAPIURL + "public/modpack/"
+const BaseModpackURL = BaseAPIURL + "%s/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
 const verStr = "{{BUILDNAME}}"
 const commitStr = "{{COMMITHASH}}"
@@ -48,6 +48,10 @@ var Options struct {
 	Latest          bool   `help:"Install latest, ignoring any version in the file name or arguments. Default: false"`
 	Help            bool   `help:"This help"`
 }
+
+var markerBytes = []byte("~~I'm not a bad downloader, slurp!~~")
+
+var apiKey = getKey()
 
 func main() {
 	filename := filepath.Base(os.Args[0])

@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strconv"
@@ -402,4 +403,42 @@ func GetMirrorFor(urlStr string, fallback string) string {
 		}
 	}
 	return fullUrl
+}
+
+func getKey() string {
+	path, err := os.Executable()
+
+	foundStr := "public"
+
+	if err == nil {
+		newPath, err := filepath.EvalSymlinks(path)
+		if err == nil {
+			path = newPath
+		}
+
+		file, err := os.Open(path)
+		if err == nil {
+			stat, err := file.Stat()
+			if err == nil {
+				byteRead := make([]byte, 86)
+				bytesRead, _ := file.ReadAt(byteRead, stat.Size()-86)
+			main:
+				for i := 0; i < bytesRead; i++ {
+					if byteRead[i] == markerBytes[0] {
+						lastIndex := 0
+						for markerIndex := 1; markerIndex < len(markerBytes); markerIndex++ {
+							if byteRead[i+markerIndex] != markerBytes[markerIndex] {
+								continue main
+							}
+							lastIndex = i + markerIndex
+						}
+						foundStr = string(byteRead[lastIndex+1:])
+						foundStr = strings.TrimSpace(foundStr)
+						log.Println("Found private key, using instead of public")
+					}
+				}
+			}
+		}
+	}
+	return foundStr
 }

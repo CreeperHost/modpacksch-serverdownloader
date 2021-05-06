@@ -94,7 +94,7 @@ type Download struct {
 
 func GetModpack(id int) (error, Modpack) {
 	ret := Modpack{}
-	newUrl := fmt.Sprintf(BaseModpackURL+"%d", id)
+	newUrl := fmt.Sprintf(BaseModpackURL+"%d", apiKey, id)
 	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
@@ -131,7 +131,7 @@ func (m Modpack) GetVersion(versionId int) (error, VersionInfo) {
 		return errors.New("version does not exist"), ret
 	}
 
-	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", m.ID, version.ID)
+	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", apiKey, m.ID, version.ID)
 	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
@@ -157,7 +157,7 @@ func (v VersionInfo) GetDownloads() []Download {
 }
 
 func (v VersionInfo) WriteJson(installPath string) bool {
-	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", v.ParentId, v.ID)
+	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", apiKey, v.ParentId, v.ID)
 	req, err := http.NewRequest("GET", newUrl, nil)
 	if err != nil {
 		return false
