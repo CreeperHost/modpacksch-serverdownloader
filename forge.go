@@ -340,7 +340,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 	if f.Version.Minecraft.RawVersion == "1.4.7" {
 		libs["https://maven.creeperhost.net/net/sourceforge/argo/argo/2.25/argo-2.25.jar"] = hashName{"argo-2.25.jar", "bb672829fde76cb163004752b86b0484bd0a7f4b"}
 		libs["https://maven.creeperhost.net/com/google/guava/guava/12.0.1/guava-12.0.1.jar"] = hashName{"guava-12.0.1.jar", "b8e78b9af7bf45900e14c6f958486b6ca682195f"}
-		libs["https://maven.creeperhost.net/org/ow2/asm/asm-all/4.0/asm-all-4.0.jar"] = hashName{"asm-all-4.0.jar", "98308890597acb64047f7e896638e0d98753ae82"}
+		libs["https://maven.creeperhost.net/org/ow2/asm/asm-all/4.0/asm-all-4.0-fml.jar"] = hashName{"asm-all-4.0.jar", "98308890597acb64047f7e896638e0d98753ae82"}
 		libs["https://maven.creeperhost.net/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar"] = hashName{"bcprov-jdk15on-147.jar", "b6f5d9926b0afbde9f4dbe3db88c5247be7794bb"}
 	}
 
