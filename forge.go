@@ -305,6 +305,11 @@ type ourFileInfo struct {
 	directory string
 }
 
+type hashName struct {
+	name string
+	hash string
+}
+
 func (f ForgeInJar) GetDownloads(installPath string) []Download {
 	log.Println("Getting downloads for Forge In Jar")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
@@ -330,39 +335,35 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 		// handleerr
 	}
 
-	libs := make(map[string]string)
+	libs := make(map[string]hashName)
 
 	if f.Version.Minecraft.RawVersion == "1.4.7" {
-		libs["https://apps.modpacks.ch/versions/argo/argo/2.25/argo-2.25.jar"] = "bb672829fde76cb163004752b86b0484bd0a7f4b"
-		libs["https://apps.modpacks.ch/versions/com/google/guava/guava/12.0.1/guava-12.0.1.jar"] = "b8e78b9af7bf45900e14c6f958486b6ca682195f"
-		libs["https://apps.modpacks.ch/versions/org/ow2/asm/asm-all/4.0fml/asm-all-4.0.jar"] = "98308890597acb64047f7e896638e0d98753ae82"
-		libs["https://apps.modpacks.ch/versions/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar"] = "b6f5d9926b0afbde9f4dbe3db88c5247be7794bb"
+		libs["https://maven.creeperhost.net/net/sourceforge/argo/argo/2.25/argo-2.25.jar"] = hashName{"argo-2.25.jar", "bb672829fde76cb163004752b86b0484bd0a7f4b"}
+		libs["https://maven.creeperhost.net/com/google/guava/guava/12.0.1/guava-12.0.1.jar"] = hashName{"guava-12.0.1.jar", "b8e78b9af7bf45900e14c6f958486b6ca682195f"}
+		libs["https://maven.creeperhost.net/org/ow2/asm/asm-all/4.0/asm-all-4.0.jar"] = hashName{"asm-all-4.0.jar", "98308890597acb64047f7e896638e0d98753ae82"}
+		libs["https://maven.creeperhost.net/org/bouncycastle/bcprov-jdk15on/1.47/bcprov-jdk15on-1.47.jar"] = hashName{"bcprov-jdk15on-147.jar", "b6f5d9926b0afbde9f4dbe3db88c5247be7794bb"}
 	}
 
 	if f.Version.Minecraft.RawVersion == "1.5.2" {
-		libs["https://apps.modpacks.ch/versions/argo/argo/3.2/argo-small-3.2.jar"] = "58912ea2858d168c50781f956fa5b59f0f7c6b51"
-		libs["https://apps.modpacks.ch/versions/com/google/guava/guava/14.0-rc3/guava-14.0-rc3.jar"] = "931ae21fa8014c3ce686aaa621eae565fefb1a6a"
-		libs["https://apps.modpacks.ch/versions/org/ow2/asm/asm-all/4.1/asm-all-4.1.jar"] = "054986e962b88d8660ae4566475658469595ef58"
-		libs["https://apps.modpacks.ch/versions/org/bouncycastle/bcprov-jdk15on/1.48/bcprov-jdk15on-148.jar"] = "960dea7c9181ba0b17e8bab0c06a43f0a5f04e65"
-		libs["https://apps.modpacks.ch/versions/cpw/mods/fml/deobfuscation_data_1.5.2.zip"] = "446e55cd986582c70fcf12cb27bc00114c5adfd9"
-		libs["https://apps.modpacks.ch/versions/org/scala-lang/scala-library/unknown/scala-library.jar"] = "458d046151ad179c85429ed7420ffb1eaf6ddf85"
+		libs["https://maven.creeperhost.net/net/sourceforge/argo/argo/3.2/argo-3.2-small.jar"] = hashName{"argo-small-3.2.jar", "58912ea2858d168c50781f956fa5b59f0f7c6b51"}
+		libs["https://maven.creeperhost.net/com/google/guava/guava/14.0-rc3/guava-14.0-rc3.jar"] = hashName{"guava-14.0-rc3.jar", "931ae21fa8014c3ce686aaa621eae565fefb1a6a"}
+		libs["https://maven.creeperhost.net/org/ow2/asm/asm-all/4.1/asm-all-4.1.jar"] = hashName{"asm-all-4.1.jar", "054986e962b88d8660ae4566475658469595ef58"}
+		libs["https://maven.creeperhost.net/org/bouncycastle/bcprov-jdk15on/1.48/bcprov-jdk15on-1.48.jar"] = hashName{"bcprov-jdk15on-148.jar", "960dea7c9181ba0b17e8bab0c06a43f0a5f04e65"}
+		libs["https://maven.creeperhost.net/cpw/mods/fml/deobfuscation_data/1.5.2/deobfuscation_data-1.5.2.zip"] = hashName{"deobfuscation_data_1.5.2.zip", "446e55cd986582c70fcf12cb27bc00114c5adfd9"}
+		libs["https://maven.creeperhost.net/org/scala-lang/scala-library/2.10.0/scala-library-2.10.0.jar"] = hashName{"scala-library.jar", "458d046151ad179c85429ed7420ffb1eaf6ddf85"}
 	}
 
 	downloads := []Download{serverDownload, {"", *URL, serverName, "", path.Join("", serverName)}}
 
-	for libUrl, sha1 := range libs {
-		libUrl := GetMirrorFor(libUrl, "https://maven.minecraftforge.net/")
+	for libUrl, lib := range libs {
 		URL, err := url.Parse(libUrl)
 		if err != nil {
 			if err != nil {
 				log.Fatalf("Couldn't download lib as error parsing URL somehow: URL: %s, Error: %v", libUrl, err)
 			}
 		}
-		baseName := path.Base(URL.Path)
-		if baseName == "bcprov-jdk15on-1.47.jar" {
-			baseName = "bcprov-jdk15on-147.jar" // meh
-		}
-		downloads = append(downloads, Download{"lib/", *URL, baseName, sha1, path.Join("lib/", baseName)})
+		baseName := lib.name
+		downloads = append(downloads, Download{"lib/", *URL, baseName, lib.sha1, path.Join("lib/", baseName)})
 	}
 
 	return downloads
