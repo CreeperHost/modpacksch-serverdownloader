@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -387,6 +388,9 @@ func HandleLaunch(file string, found int, versionFound int) {
 	}
 
 	modLoaderDls := ml.GetDownloads(installPath)
+
+	URL, _ := url.Parse("https://media.forgecdn.net/files/3557/251/Log4jPatcher-1.0.0.jar")
+	downloads = append(downloads, Download{"log4jfix/", *URL, "Log4jPatcher-1.0.0.jar", "eb20584e179dc17b84b6b23fbda45485cd4ad7cc", path.Join("log4jfix/", "Log4jPatcher-1.0.0.jar")})
 
 	downloads = append(downloads, modLoaderDls...)
 

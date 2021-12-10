@@ -200,20 +200,20 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
 			"IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
 			"echo eula=true>eula.txt\r\n" +
 			":END\r\n" +
-			"java.exe " + launch + "\r\n" +
+			"java.exe -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch + "\r\n" +
 			"pause"
 		filename += ".bat"
 	} else {
-		script = "#!/bin/sh\n" +
+		script = "#!/bin/bash\n" +
 			"if ! grep -q \"eula=true\" eula.txt; then\n" +
 			"    echo \"Do you agree to the Mojang EULA available at https://account.mojang.com/documents/minecraft_eula ?\"\n" +
-			"    read  -n 1 -p \"[y/n] \" EULA\n" +
+			"    read -N 1 -p \"[y/n] \" EULA\n" +
 			"    if [ \"$EULA\" = \"y\" ]; then\n" +
 			"        echo \"eula=true\" > eula.txt\n" +
 			"        echo\n" +
 			"    fi\n" +
 			"fi\n" +
-			"java " + launch
+			"java -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
 		filename += ".sh"
 	}
 	if err := ioutil.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
