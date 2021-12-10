@@ -189,7 +189,7 @@ const forgeUrlInstallJar = "https://apps.modpacks.ch/versions/net/minecraftforge
 const forgeUrlInstallJSON = "https://apps.modpacks.ch/versions/net/minecraftforge/forge/%s/forge-%s.json"
 
 func GetMirrors() []string {
-	return []string{"https://maven.creeperhost.net/", "https://libraries.minecraft.net/", "https://forge.modpacks.ch/maven/", "https://apps.modpacks.ch/versions/", "https://maven.creeperhost.net/"}
+	return []string{"https://maven.creeperhost.net/", "https://libraries.minecraft.net/", "https://apps.modpacks.ch/versions/"}
 }
 
 type ForgeInstall struct {
@@ -363,7 +363,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 			}
 		}
 		baseName := lib.name
-		downloads = append(downloads, Download{"lib/", *URL, baseName, lib.sha1, path.Join("lib/", baseName)})
+		downloads = append(downloads, Download{"lib/", *URL, baseName, lib.hash, path.Join("lib/", baseName)})
 	}
 
 	return downloads
