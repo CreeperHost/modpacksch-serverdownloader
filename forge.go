@@ -135,7 +135,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	if err != nil {
 		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
-	downloads := []Download{{"", *URL, universalName, "", path.Join("", universalName)}}
+	downloads := []Download{{"", *URL, universalName, "", "", path.Join("", universalName)}}
 
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJson{}
@@ -236,7 +236,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 	if err != nil {
 		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
-	downloads := []Download{{"", *URL, installerName, "", path.Join("", installerName+".jar")}}
+	downloads := []Download{{"", *URL, installerName, "", "", path.Join("", installerName+".jar")}}
 
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJsonFG3{}
@@ -353,7 +353,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 		libs["https://maven.creeperhost.net/org/scala-lang/scala-library/2.10.0/scala-library-2.10.0.jar"] = hashName{"scala-library.jar", "458d046151ad179c85429ed7420ffb1eaf6ddf85"}
 	}
 
-	downloads := []Download{serverDownload, {"", *URL, serverName, "", path.Join("", serverName)}}
+	downloads := []Download{serverDownload, {"", *URL, serverName, "", "", path.Join("", serverName)}}
 
 	for libUrl, lib := range libs {
 		URL, err := url.Parse(libUrl)
@@ -363,7 +363,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 			}
 		}
 		baseName := lib.name
-		downloads = append(downloads, Download{"lib/", *URL, baseName, lib.hash, path.Join("lib/", baseName)})
+		downloads = append(downloads, Download{"lib/", *URL, baseName, "sha1", lib.hash, path.Join("lib/", baseName)})
 	}
 
 	return downloads
@@ -439,7 +439,7 @@ func (v VersionJson) GetLibraryDownloads() []Download {
 		if len(artichoke.Hashes) > 0 {
 			hash = artichoke.Hashes[0]
 		}
-		downloads = append(downloads, Download{path.Join("libraries", dir), *actualUrl, file, hash, path.Join("libraries", dir, file)})
+		downloads = append(downloads, Download{path.Join("libraries", dir), *actualUrl, file, "sha1", hash, path.Join("libraries", dir, file)})
 	}
 	return downloads
 }
@@ -496,7 +496,7 @@ func (v VersionJsonFG3) GetDownloads() []Download {
 			if err != nil {
 				continue
 			}
-			downloads = append(downloads, Download{path.Join("libraries", dir), *actualUrl, file, artichoke.SHA1, path.Join("libraries", dir, file)})
+			downloads = append(downloads, Download{path.Join("libraries", dir), *actualUrl, file, "sha1", artichoke.SHA1, path.Join("libraries", dir, file)})
 		}
 	}
 	return downloads

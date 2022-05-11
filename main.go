@@ -42,6 +42,7 @@ var Options struct {
 	Auto            bool   `help:"Ask no questions, use defaults."`
 	Path            string `help:"Directory to install in. Default: current directory"`
 	Noscript        bool   `help:"Skip creating start script. Default: false"`
+	Nojava          bool   `help:"Skip downloading a compatible Adoptium JRE. Default: false"`
 	Threads         int    `help:"Number of threads to use for downloading. Default: cpucores * 2"`
 	Integrityupdate bool   `help:"Whether changed files should be overwritten with fresh copies when updating. Most useful when used with Auto. Default: false\n    Example: You changed config/test.cfg on your server from default. The modpack updates config/test.cfg - with this flag, it will assume you wish to overwrite with the latest version"`
 	Integrity       bool   `help:"Do a full integrity check, even on files not changed by the update. integrityupdate assumed. Default: true"`
@@ -294,7 +295,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 				newDown := downloads[i]
 				if oldDown.FullPath == newDown.FullPath {
 					lastFound = i
-					if oldDown.SHA1 != newDown.SHA1 {
+					if oldDown.HashType != newDown.HashType || oldDown.Hash != newDown.Hash {
 						changedFilesOld = append(changedFilesOld, oldDown)
 						changedFilesNew = append(changedFilesNew, newDown)
 						LogIfVerbose("Found changed file %s\n", newDown.FullPath)
@@ -390,9 +391,18 @@ func HandleLaunch(file string, found int, versionFound int) {
 	modLoaderDls := ml.GetDownloads(installPath)
 
 	URL, _ := url.Parse("https://media.forgecdn.net/files/3557/251/Log4jPatcher-1.0.0.jar")
-	downloads = append(downloads, Download{"log4jfix/", *URL, "Log4jPatcher-1.0.0.jar", "eb20584e179dc17b84b6b23fbda45485cd4ad7cc", path.Join("log4jfix/", "Log4jPatcher-1.0.0.jar")})
+	downloads = append(downloads, Download{"log4jfix/", *URL, "Log4jPatcher-1.0.0.jar", "sha1", "eb20584e179dc17b84b6b23fbda45485cd4ad7cc", path.Join("log4jfix/", "Log4jPatcher-1.0.0.jar")})
 
 	downloads = append(downloads, modLoaderDls...)
+
+	var java JavaProvider
+	if Options.Nojava {
+		java = &NoOpJavaProvider{}
+	} else {
+		java = versionInfo.GetJavaProvider()
+	}
+
+	downloads = append(downloads, java.GetDownloads(installPath)...)
 
 	grabs, err := GetBatch(Options.Threads, installPath, downloads...)
 	if err != nil {
@@ -435,10 +445,13 @@ Loop:
 
 	ml.Install(installPath)
 
+	// TODO, do this before ModLoaders and give them this JRE to use?
+	java.Install(installPath)
+
 	versionInfo.WriteJson(installPath)
 
 	if !Options.Noscript {
-		versionInfo.WriteStartScript(installPath, ml)
+		versionInfo.WriteStartScript(installPath, ml, java)
 	}
 
 	log.Printf("Installed!")
@@ -495,6 +508,17 @@ func (v VersionInfo) GetModLoader() (error, ModLoader) {
 	return errors.New(fmt.Sprintf("Unable to locate Mod Loader for %s %s %s", modLoader.Name, modLoader.Version, mc.RawVersion)), ret
 }
 
+func (v VersionInfo) GetJavaProvider() JavaProvider {
+	target := v.GetTargetVersion("runtime")
+	if target == nil {
+		// Default to Java 8, TODO, pull the runtime component out of the vanilla manifest for the targeted Minecraft version.
+		j8 := "8"
+		return &AdoptiumJavaProvider{&j8, nil, nil}
+	}
+	splits := strings.Split(*target, ".")
+	return &AdoptiumJavaProvider{&splits[0], target, nil}
+}
+
 func APICall(url string, val interface{}) error {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
@@ -540,18 +564,28 @@ func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Resp
 
 	reqs := make([]*grab.Request, len(downloads))
 	for i := 0; i < len(downloads); i++ {
-		tmpPath := downloads[i].Path
+		download := downloads[i]
+		tmpPath := download.Path
 		if !filepath.IsAbs(tmpPath) {
 			tmpPath = path.Join(dst, tmpPath)
 		}
-		req, err := grab.NewRequest(path.Join(tmpPath, downloads[i].Name), downloads[i].URL.String())
+		req, err := grab.NewRequest(path.Join(tmpPath, download.Name), download.URL.String())
 		if err != nil {
 			return nil, err
 		}
 		req.NoResume = true // force re-download
-		if len(downloads[i].SHA1) > 0 {
-			byteHex, _ := hex.DecodeString(downloads[i].SHA1)
-			req.SetChecksum(crypto.SHA1.New(), byteHex, false)
+		// TODO, Download should have a function to get the 'validation properties'
+		//  this could unify some hash handling.
+		if len(download.HashType) != 0 && len(download.Hash) != 0 {
+			byteHex, _ := hex.DecodeString(download.Hash)
+			hashType := crypto.SHA1 // Ideally i want null default.
+			switch download.HashType {
+			case "sha1":
+				hashType = crypto.SHA1
+			case "sha256":
+				hashType = crypto.SHA256
+			}
+			req.SetChecksum(hashType.New(), byteHex, false)
 		}
 
 		reqs[i] = req

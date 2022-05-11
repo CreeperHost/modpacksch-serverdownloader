@@ -2,11 +2,12 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha1"
+	"crypto"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"io/ioutil"
 	"log"
@@ -88,7 +89,8 @@ type Download struct {
 	Path     string
 	URL      url.URL
 	Name     string
-	SHA1     string
+	HashType string
+	Hash     string
 	FullPath string
 }
 
@@ -151,9 +153,18 @@ func (v VersionInfo) GetDownloads() []Download {
 			//shrug
 			continue
 		}
-		downloads = append(downloads, Download{f.Path, *parse, f.Name, f.SHA1, path.Join(f.Path, f.Name)})
+		downloads = append(downloads, Download{f.Path, *parse, f.Name, "sha1", f.SHA1, path.Join(f.Path, f.Name)})
 	}
 	return downloads
+}
+
+func (v VersionInfo) GetTargetVersion(targetType string) *string {
+	for _, target := range v.Targets {
+		if target.Type == targetType {
+			return &target.Version
+		}
+	}
+	return nil
 }
 
 func (v VersionInfo) WriteJson(installPath string) bool {
@@ -175,7 +186,7 @@ func (v VersionInfo) WriteJson(installPath string) bool {
 	return ioutil.WriteFile(path.Join(installPath, "version.json"), stringRet, 0644) == nil
 }
 
-func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
+func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java JavaProvider) {
 	jar := loader.GetLaunchJar(installPath)
 	launch := fmt.Sprintf("-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx%dM -Xms%dM -jar %s nogui", v.Specs.Recommend, v.Specs.Minimum, jar)
 	var script string
@@ -200,7 +211,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
 			"IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
 			"echo eula=true>eula.txt\r\n" +
 			":END\r\n" +
-			"java.exe -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch + "\r\n" +
+			java.GetJavaPath(installPath) + " -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch + "\r\n" +
 			"pause"
 		filename += ".bat"
 	} else {
@@ -213,7 +224,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader) {
 			"        echo\n" +
 			"    fi\n" +
 			"fi\n" +
-			"java -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
+			java.GetJavaPath(installPath) + " -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
 		filename += ".sh"
 	}
 	if err := ioutil.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
@@ -231,11 +242,20 @@ func GetVersionInfoFromFile(file string) (error, VersionInfo) {
 }
 
 func (d Download) VerifyChecksum(installPath string) bool {
-	if len(d.SHA1) == 0 {
+	if len(d.HashType) == 0 || len(d.Hash) == 0 {
 		return true
 	}
 
-	hasher := sha1.New()
+	var hasher hash.Hash
+	switch d.HashType {
+	case "sha1":
+		hasher = crypto.SHA1.New()
+	case "sha256":
+		hasher = crypto.SHA256.New()
+	default:
+		// Unknown hash, assume valid.
+		return true
+	}
 
 	filename := path.Join(installPath, d.Path, d.Name)
 
@@ -249,6 +269,6 @@ func (d Download) VerifyChecksum(installPath string) bool {
 	}
 
 	calcedHash := hasher.Sum(nil)
-	decodedBytes, err := hex.DecodeString(d.SHA1)
+	decodedBytes, err := hex.DecodeString(d.Hash)
 	return bytes.Compare(calcedHash, decodedBytes) == 0
 }

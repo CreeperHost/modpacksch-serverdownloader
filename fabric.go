@@ -87,7 +87,7 @@ func (f Fabric) GetDownloads(installPath string) []Download {
 			continue
 		}
 
-		downloads = append(downloads, Download{path.Join(homeDir, ".cache"), *parse, filename, sha1, path.Join(homeDir, ".cache", filename)})
+		downloads = append(downloads, Download{path.Join(homeDir, ".cache"), *parse, filename, "sha1", sha1, path.Join(homeDir, ".cache", filename)})
 	}
 	return downloads
 }

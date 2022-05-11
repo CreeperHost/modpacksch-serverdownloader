@@ -1,8 +1,10 @@
 package main
 
 import (
+	"archive/tar"
 	"archive/zip"
 	"bufio"
+	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -215,7 +217,7 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 			if err == nil {
 				URL, err := url.Parse(vanillaManifest.Downloads.Server.URL)
 				if err == nil {
-					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", vanillaManifest.Downloads.Server.SHA1, path.Join("", "minecraft_server."+v.ID+".jar")}
+					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", "sha1", vanillaManifest.Downloads.Server.SHA1, path.Join("", "minecraft_server."+v.ID+".jar")}
 				}
 			}
 		}
@@ -441,4 +443,94 @@ func getKey() string {
 		}
 	}
 	return foundStr
+}
+
+func extractZip(dest string, zipPath string) error {
+	archive, err := zip.OpenReader(zipPath)
+	if err != nil {
+		return err
+	}
+
+	defer archive.Close()
+
+	for _, f := range archive.File {
+		destPath := filepath.Join(dest, f.Name)
+
+		if f.FileInfo().IsDir() {
+			err := os.MkdirAll(destPath, os.ModePerm)
+			if err != nil {
+				return err
+			}
+			continue
+		}
+
+		log.Printf("Extracting %s -> %s", f.Name, destPath)
+
+		if err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm); err != nil {
+			return err
+		}
+
+		dstFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+		if err != nil {
+			return err
+		}
+
+		fileInArchive, err := f.Open()
+		if err != nil {
+			return err
+		}
+
+		if _, err := io.Copy(dstFile, fileInArchive); err != nil {
+			return err
+		}
+
+		dstFile.Close()
+		fileInArchive.Close()
+	}
+	return nil
+}
+
+func extractTarGz(dest string, zipPath string) error {
+	file, err := os.Open(zipPath)
+	if err != nil {
+		return err
+	}
+	uncompressed, err := gzip.NewReader(file)
+	if err != nil {
+		return err
+	}
+	tarReader := tar.NewReader(uncompressed)
+
+	for true {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		destPath := filepath.Join(dest, header.Name)
+		switch header.Typeflag {
+		case tar.TypeDir:
+			if err := os.MkdirAll(destPath, header.FileInfo().Mode()); err != nil {
+				return err
+			}
+		case tar.TypeReg:
+			log.Printf("Extracting %s -> %s", header.Name, destPath)
+			dstFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, header.FileInfo().Mode())
+			if err != nil {
+				return err
+			}
+			if _, err := io.Copy(dstFile, tarReader); err != nil {
+				return err
+			}
+			dstFile.Close()
+		case tar.TypeSymlink:
+			// Ignored.
+		default:
+			log.Printf("Unhandled type: %d %s", header.Typeflag, header.Name)
+		}
+	}
+	file.Close()
+	return nil
 }
