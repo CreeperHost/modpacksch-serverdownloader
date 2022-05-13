@@ -124,8 +124,8 @@ func (f Fabric) Install(installPath string) bool {
 	return true
 }
 
-func (f Fabric) GetLaunchJar(installPath string) string {
-	return fmt.Sprintf("fabric-%s-%s-server-launch.jar", f.Minecraft.RawVersion, f.FabricVersion.RawVersion)
+func (f Fabric) GetLaunchJar(installPath string) (string, []string) {
+	return fmt.Sprintf("fabric-%s-%s-server-launch.jar", f.Minecraft.RawVersion, f.FabricVersion.RawVersion), nil
 }
 
 func GetFabric(modloader Target, mc Minecraft) (error, ModLoader) {

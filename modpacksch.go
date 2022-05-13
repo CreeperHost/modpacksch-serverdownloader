@@ -16,6 +16,7 @@ import (
 	"os"
 	"path"
 	"runtime"
+	"strings"
 )
 
 type APIFunctions interface {
@@ -187,8 +188,13 @@ func (v VersionInfo) WriteJson(installPath string) bool {
 }
 
 func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java JavaProvider) {
-	jar := loader.GetLaunchJar(installPath)
-	launch := fmt.Sprintf("-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx%dM -Xms%dM -jar %s nogui", v.Specs.Recommend, v.Specs.Minimum, jar)
+	mainJar, jvmArgs := loader.GetLaunchJar(installPath)
+	jarStr := ""
+	if len(mainJar) != 0 {
+		jarStr = "-jar " + mainJar
+	}
+	jarStr += strings.Join(jvmArgs, " ")
+	launch := fmt.Sprintf("-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx%dM -Xms%dM %s nogui", v.Specs.Recommend, v.Specs.Minimum, jarStr)
 	var script string
 	filename := "start"
 	if runtime.GOOS == "windows" {

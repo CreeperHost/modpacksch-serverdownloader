@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -165,20 +166,20 @@ func (f ForgeUniversal) Install(installPath string) bool {
 	return true
 }
 
-func (f ForgeUniversal) GetLaunchJar(installPath string) string {
+func (f ForgeUniversal) GetLaunchJar(installPath string) (string, []string) {
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
-		return forgeJar
+		return forgeJar, nil
 	}
 	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
-		return forgeJar
+		return forgeJar, nil
 	}
 	forgeJar = fmt.Sprintf("forge-%s-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion, f.Version.Minecraft.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
-		return forgeJar
+		return forgeJar, nil
 	}
-	return "insert-jar-here.jar"
+	return "insert-jar-here.jar", nil
 }
 
 const versionFmt = "%s-%s"
@@ -284,16 +285,39 @@ func (f ForgeInstall) Install(installPath string) bool {
 	return true
 }
 
-func (f ForgeInstall) GetLaunchJar(installPath string) string {
-	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+func (f ForgeInstall) GetLaunchJar(installPath string) (string, []string) {
+	mcVer := f.Version.Minecraft.RawVersion
+	forgeVer := f.Version.RawVersion
+	forgeJar := fmt.Sprintf("forge-%s-%s.jar", mcVer, forgeVer)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
-		return forgeJar
+		return forgeJar, nil
 	}
-	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
+	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", mcVer, forgeVer)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
-		return forgeJar
+		return forgeJar, nil
 	}
-	return "insert-jar-here.jar"
+
+	// Detect Modular forge from the 'user_jvm_args.txt' file.
+	if _, err := os.Stat(path.Join(installPath, "user_jvm_args.txt")); !os.IsNotExist(err) {
+		// _YEEEET_ OUTTA HERE WITH YO SHEEEET
+		os.Remove(path.Join(installPath, "run.bat"))
+		os.Remove(path.Join(installPath, "run.sh"))
+
+		var argsTxt string
+		switch runtime.GOOS {
+		case "windows":
+			argsTxt = "win_args.txt"
+		default:
+			argsTxt = "unix_args.txt"
+		}
+
+		var jvmArgs []string
+		jvmArgs = append(jvmArgs, "@user_jvm_args.txt")
+		jvmArgs = append(jvmArgs, "@"+path.Join("libraries", "net", "minecraftforge", "forge", mcVer+"-"+forgeVer, argsTxt))
+
+		return "", jvmArgs
+	}
+	return "insert-jar-here.jar", nil
 }
 
 type ForgeInJar struct {
@@ -404,16 +428,16 @@ func (f ForgeInJar) Install(installPath string) bool {
 	return true
 }
 
-func (f ForgeInJar) GetLaunchJar(installPath string) string {
+func (f ForgeInJar) GetLaunchJar(installPath string) (string, []string) {
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
-		return forgeJar
+		return forgeJar, nil
 	}
 	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
-		return forgeJar
+		return forgeJar, nil
 	}
-	return "insert-jar-here.jar"
+	return "insert-jar-here.jar", nil
 }
 
 type VersionJson struct {

@@ -24,6 +24,6 @@ func (m Minecraft) Install(installPath string) bool {
 	return true
 }
 
-func (m Minecraft) GetLaunchJar(installPath string) string {
-	return fmt.Sprintf("minecraft_server.%s.jar", m.RawVersion)
+func (m Minecraft) GetLaunchJar(installPath string) (string, []string) {
+	return fmt.Sprintf("minecraft_server.%s.jar", m.RawVersion), nil
 }
