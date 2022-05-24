@@ -570,6 +570,7 @@ func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Resp
 			tmpPath = path.Join(dst, tmpPath)
 		}
 		req, err := grab.NewRequest(path.Join(tmpPath, download.Name), download.URL.String())
+		req.HTTPRequest.Header.Add("user-agent", "serverdownloader/"+verStr)
 		if err != nil {
 			return nil, err
 		}
@@ -606,8 +607,7 @@ func updateUI(responses []*grab.Response) {
 					resp.Err())
 			} else {
 				succeeded++
-				log.Printf("Downloaded %s from %s\n",
-					resp.Filename, resp.Request.URL())
+				log.Printf("[%d/%d] Downloaded %s from %s\n", i+1, len(responses), resp.Filename, resp.Request.URL())
 			}
 			responses[i] = nil
 		}
