@@ -608,7 +608,7 @@ func updateUI(responses []*grab.Response) {
 					resp.Err())
 			} else {
 				succeeded++
-				log.Printf("[%d/%d] Downloaded %s from %s\n", i+1, len(downloads), resp.Filename, resp.Request.URL())
+				log.Printf("[%d/%d] Downloaded %s from %s\n", succeeded, len(downloads), resp.Filename, resp.Request.URL())
 			}
 			responses[i] = nil
 		}
