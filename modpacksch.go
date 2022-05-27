@@ -217,8 +217,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 			"IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
 			"echo eula=true>eula.txt\r\n" +
 			":END\r\n" +
-			java.GetJavaPath(installPath) + " -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch + "\r\n" +
-			"pause"
+			"start \"FTB Server\"" + java.GetJavaPath(installPath) + " -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch + "\r\n"
 		filename += ".bat"
 	} else {
 		script = "#!/bin/bash\n" +
@@ -230,7 +229,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 			"        echo\n" +
 			"    fi\n" +
 			"fi\n" +
-			java.GetJavaPath(installPath) + " -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
+			"./" + java.GetJavaPath(installPath) + " -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
 		filename += ".sh"
 	}
 	if err := ioutil.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
