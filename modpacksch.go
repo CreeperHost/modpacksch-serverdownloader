@@ -217,7 +217,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 			"IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
 			"echo eula=true>eula.txt\r\n" +
 			":END\r\n" +
-			"start \"" + v.Name + "\"" + java.GetJavaPath(installPath) + " -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch + "\r\n"
+			"start \"FTB Server\" " + java.GetJavaPath(installPath) + " -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch + "\r\n"
 		filename += ".bat"
 	} else {
 		script = "#!/bin/bash\n" +
