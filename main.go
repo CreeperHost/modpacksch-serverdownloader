@@ -524,6 +524,7 @@ func APICall(url string, val interface{}) error {
 	if err != nil {
 		return err
 	}
+	req.Header.Set("User-Agent", "modpackserverdownloader/1.0")
 
 	resp, err := client.Do(req)
 	if err != nil {
