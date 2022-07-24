@@ -1,7 +1,7 @@
 #!/bin/bash
 start=`date +%s`
 builds=0
-go get github.com/cavaliercoder/grab
+go get github.com/cavaliercoder/grab/v2
 VERBASE=`date "+%Y%m%d%H%M"`
 REPOHASH=`cat .git/HEAD | awk '{print $2}'`
 COMMIT=`cat .git/$REPOHASH`
