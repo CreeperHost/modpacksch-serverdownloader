@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -161,11 +162,14 @@ func (self *AdoptiumJavaProvider) GetJavaPath(installPath string) string {
 		binFolder = "bin"
 	case "darwin":
 		executable = "java"
-		binFolder = path.Join("Contents", "Home", "bin")
+		binFolder = filepath.Join("Contents", "Home", "bin")
 	}
 
 	if self.InstallProps != nil {
-		return path.Join(installPath,
+		return filepath.Join(
+			//installPath,
+			// install path comes from --path argument
+			// server startup script runtime context has installPath as it's current working directory
 			"jre",
 			self.InstallProps.Release.ReleaseName+"-"+self.InstallProps.Binary.ImageType,
 			binFolder,
