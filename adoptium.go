@@ -116,7 +116,8 @@ func (self *AdoptiumJavaProvider) GetDownloads(installPath string) []Download {
 	version := InstallProperties{rel, &binary, &fullPath}
 	self.InstallProps = &version
 
-	downloads = append(downloads, Download{jrePath, *parsedUrl, archiveName, "sha256", binary.Package.Checksum, fullPath})
+	// batch downloader uses relative names without installPath
+	downloads = append(downloads, Download{"jre", *parsedUrl, archiveName, "sha256", binary.Package.Checksum, archiveName})
 
 	return downloads
 }
