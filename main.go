@@ -33,6 +33,7 @@ const verStr = "{{BUILDNAME}}"
 const commitStr = "{{COMMITHASH}}"
 
 var (
+	downloads  []Download
 	inProgress = 0
 	succeeded  = 0
 	failed     = 0
@@ -241,7 +242,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 		log.Fatalf("Error fetching modpack: %v", err)
 	}
 
-	downloads := versionInfo.GetDownloads()
+	downloads = versionInfo.GetDownloads()
 
 	upgradeStr := ""
 
@@ -607,8 +608,7 @@ func updateUI(responses []*grab.Response) {
 					resp.Err())
 			} else {
 				succeeded++
-				log.Printf("Downloaded %s from %s\n",
-					resp.Filename, resp.Request.URL())
+				log.Printf("[%d/%d] Downloaded %s from %s\n", succeeded, len(downloads), resp.Filename, resp.Request.URL())
 			}
 			responses[i] = nil
 		}
