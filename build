@@ -8,6 +8,9 @@ COMMIT=`cat .git/$REPOHASH`
 echo "Building commit ${COMMIT} as version ${VERBASE}"
 mkdir -p out/${COMMIT: -5}
 
+export GOOS=""
+export GOARCH=""
+
 sed -i -e "s/{{COMMITHASH}}/${COMMIT}/" main.go
 
 GOOS="windows"
