@@ -29,10 +29,11 @@ var client = &http.Client{}
 const BaseAPIURL = "https://api.modpacks.ch/"
 const BaseModpackURL = BaseAPIURL + "%s/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
-const verStr = "{{BUILDNAME}}"
-const commitStr = "{{COMMITHASH}}"
 
 var (
+	VerStr    string
+	CommitStr string
+
 	downloads  []Download
 	inProgress = 0
 	succeeded  = 0
@@ -161,8 +162,8 @@ func PrintUsage(filename string) {
 	println(" |_| |_| |_|\\___/ \\__,_| .__/ \\__,_|\\___|_|\\_\\___(_)___|_| |_|")
 	println("                       | |                                    ")
 	println("                       |_|                                    ")
-	println(" modpacks.ch server downloader golang - build " + verStr)
-	println(" based on commit " + commitStr)
+	println(" modpacks.ch server downloader golang - build " + VerStr)
+	println(" based on commit " + CommitStr)
 	println()
 	println("Usage:")
 	if err == nil {

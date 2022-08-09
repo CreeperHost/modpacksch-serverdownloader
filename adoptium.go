@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -115,7 +116,7 @@ func (self *AdoptiumJavaProvider) GetDownloads(installPath string) []Download {
 	version := InstallProperties{rel, &binary, &fullPath}
 	self.InstallProps = &version
 
-	downloads = append(downloads, Download{jrePath, *parsedUrl, archiveName, "sha256", binary.Package.Checksum, fullPath})
+	downloads = append(downloads, Download{"jre", *parsedUrl, archiveName, "sha256", binary.Package.Checksum, fullPath})
 
 	return downloads
 }
@@ -161,11 +162,11 @@ func (self *AdoptiumJavaProvider) GetJavaPath(installPath string) string {
 		binFolder = "bin"
 	case "darwin":
 		executable = "java"
-		binFolder = path.Join("Contents", "Home", "bin")
+		binFolder = filepath.Join("Contents", "Home", "bin")
 	}
 
 	if self.InstallProps != nil {
-		return path.Join(installPath,
+		return filepath.Join(installPath,
 			"jre",
 			self.InstallProps.Release.ReleaseName+"-"+self.InstallProps.Binary.ImageType,
 			binFolder,

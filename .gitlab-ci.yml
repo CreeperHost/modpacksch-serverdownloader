@@ -4,91 +4,71 @@ default:
 before_script:
   - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
 
+.build:
+  stage: build
+  script:
+    - go get github.com/cavaliercoder/grab@v2.0.0
+    - VER="${VERBASE}-${GOOS}-${GOARCH}"
+    - go build -ldflags "-X 'main.CommitStr=$CI_COMMIT_SHA' -X 'main.VerStr=$VER" -o $FILE_OUTPUT
+    - 'echo "curl --header \"JOB-TOKEN: **********\" --upload-file \"${FILE_OUTPUT}\" \"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}\""'
+#    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"'
+  artifacts:
+    paths:
+      - $FILE_OUTPUT
+    expire_in: 1 day
+
 build_windows:
+  extends: .build
   variables:
     GOOS: "windows"
     GOARCH: "amd64"
-  script:
-    - go get github.com/cavaliercoder/grab@v2.0.0
-    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
-    - VER="${VERBASE}-${GOOS}-${GOARCH}"
-    - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOOS-$GOARCH.exe
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}.exe" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}.exe"'
-
+    CGO_ENABLED: 0
+    FILE_OUTPUT: $GOOS-$GOARCH.exe
 
 build_linux_amd64:
+  extends: .build
   variables:
     GOOS: "linux"
     GOARCH: "amd64"
-  script:
-    - go get github.com/cavaliercoder/grab@v2.0.0
-    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
-    - VER="${VERBASE}-${GOOS}-${GOARCH}"
-    - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOOS-$GOARCH
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
-
+    CGO_ENABLED: 0
+    FILE_OUTPUT: $GOOS-$GOARCH
 
 build_freebsd_amd64:
+  extends: .build
   variables:
     GOOS: "freebsd"
     GOARCH: "amd64"
-  script:
-    - go get github.com/cavaliercoder/grab@v2.0.0
-    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
-    - VER="${VERBASE}-${GOOS}-${GOARCH}"
-    - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOOS-$GOARCH
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
-
+    CGO_ENABLED: 0
+    FILE_OUTPUT: $GOOS-$GOARCH
 
 build_darwin_amd64:
+  extends: .build
   variables:
     GOOS: "darwin"
     GOARCH: "amd64"
-  script:
-    - go get github.com/cavaliercoder/grab@v2.0.0
-    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
-    - VER="${VERBASE}-${GOOS}-${GOARCH}"
-    - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOOS-$GOARCH
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
-
+    CGO_ENABLED: 0
+    FILE_OUTPUT: $GOOS-$GOARCH
 
 build_linux_arm64:
+  extends: .build
   variables:
     GOOS: "linux"
     GOARCH: "arm64"
-  script:
-    - go get github.com/cavaliercoder/grab@v2.0.0
-    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
-    - VER="${VERBASE}-${GOOS}-${GOARCH}"
-    - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOOS-$GOARCH
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
-
+    CGO_ENABLED: 0
+    FILE_OUTPUT: $GOOS-$GOARCH
 
 build_freebsd_arm64:
+  extends: .build
   variables:
     GOOS: "freebsd"
     GOARCH: "arm64"
-  script:
-    - go get github.com/cavaliercoder/grab@v2.0.0
-    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
-    - VER="${VERBASE}-${GOOS}-${GOARCH}"
-    - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOOS-$GOARCH
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
+    CGO_ENABLED: 0
+    FILE_OUTPUT: $GOOS-$GOARCH
 
 build_darwin_arm64:
+  extends: .build
   variables:
     GOOS: "darwin"
     GOARCH: "arm64"
-  script:
-    - go get github.com/cavaliercoder/grab@v2.0.0
-    - sed -i "s/{{COMMITHASH}}/${CI_COMMIT_SHA}/" main.go
-    - VER="${VERBASE}-${GOOS}-${GOARCH}"
-    - sed -i "s/{{BUILDNAME}}/${VER}/" main.go
-    - go build -o $GOOS-$GOARCH
-    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${GOOS}-${GOARCH}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${GOOS}-${GOARCH}"'
+    CGO_ENABLED: 0
+    FILE_OUTPUT: $GOOS-$GOARCH
