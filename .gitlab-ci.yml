@@ -1,5 +1,5 @@
 default:
-  image: tinygo/tinygo:0.25.0
+  image: tinygo/tinygo:latest
 
 before_script:
   - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
