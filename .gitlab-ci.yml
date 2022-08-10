@@ -6,12 +6,15 @@ before_script:
 
 .build:
   stage: build
+  rules:
+    - if: $CI_COMMIT_REF_NAME =~ /golang/
+      variables:
+        DO_UPLOAD: "true"
   script:
     - go get github.com/cavaliercoder/grab@v2.0.0
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - go build -ldflags "-X 'main.CommitStr=$CI_COMMIT_SHA' -X 'main.VerStr=$VER'" -o $FILE_OUTPUT
-    - 'echo "curl --header \"JOB-TOKEN: **********\" --upload-file \"${FILE_OUTPUT}\" \"${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}\""'
-#    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"'
+    - 'if [ "$DO_UPLOAD" == "true" ]; then curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"; fi'
   artifacts:
     paths:
       - $FILE_OUTPUT
