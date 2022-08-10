@@ -2,7 +2,7 @@ default:
   image: golang:1.16
 
 before_script:
-  - apt update && apt install build-essential -y
+  - apt-get update && apt-get install build-essential gcc -y
   - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
 
 stages:
