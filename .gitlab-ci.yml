@@ -16,12 +16,12 @@ stages:
   script:
     - go get github.com/cavaliercoder/grab@v2.0.0
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
-    - mkdir -p ./out
-    - go build -ldflags "-s -w -X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o "./out/$FILE_OUTPUT"
-  #    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"'
+    - mkdir -p ./binaries
+    - go build -ldflags "-s -w -X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o "./binaries/$FILE_OUTPUT"
+  #    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "binaries/${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"'
   artifacts:
     paths:
-      - "./out/$FILE_OUTPUT"
+      - "./binaries/$FILE_OUTPUT"
     expire_in: 5 minutes
 
 build_windows:
@@ -97,5 +97,5 @@ package:
   artifacts:
     name: all-artifacts
     paths:
-      - "./out/**"
+      - "./binaries/**"
     expire_in: 1 week
