@@ -14,7 +14,7 @@ stages:
     - go get github.com/cavaliercoder/grab@v2.0.0
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - mkdir -p ./out
-    - tinygo build -ldflags "-s -w -X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o "./out/$FILE_OUTPUT"
+    - tinygo build -ldflags "-X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o "./out/$FILE_OUTPUT"
   #    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"'
   artifacts:
     paths:
