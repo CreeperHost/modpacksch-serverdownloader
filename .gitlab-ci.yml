@@ -11,6 +11,8 @@ stages:
 
 .build:
   stage: build
+  variables:
+    CGO_ENABLED: 1
   script:
     - go get github.com/cavaliercoder/grab@v2.0.0
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
@@ -28,7 +30,6 @@ build_windows:
   variables:
     GOOS: "windows"
     GOARCH: "amd64"
-    CGO_ENABLED: 0
     FILE_OUTPUT: "windows.exe"
 
 build_linux_amd64:
@@ -37,7 +38,6 @@ build_linux_amd64:
   variables:
     GOOS: "linux"
     GOARCH: "amd64"
-    CGO_ENABLED: 0
     FILE_OUTPUT: "linux"
 
 build_freebsd_amd64:
@@ -46,7 +46,6 @@ build_freebsd_amd64:
   variables:
     GOOS: "freebsd"
     GOARCH: "amd64"
-    CGO_ENABLED: 0
     FILE_OUTPUT: "freebsd"
 
 build_darwin_amd64:
@@ -55,7 +54,6 @@ build_darwin_amd64:
   variables:
     GOOS: "darwin"
     GOARCH: "amd64"
-    CGO_ENABLED: 0
     FILE_OUTPUT: "mac"
 
 build_linux_arm64:
@@ -64,7 +62,6 @@ build_linux_arm64:
   variables:
     GOOS: "linux"
     GOARCH: "arm64"
-    CGO_ENABLED: 0
     FILE_OUTPUT: "linux-arm"
 
 build_freebsd_arm64:
@@ -73,7 +70,6 @@ build_freebsd_arm64:
   variables:
     GOOS: "freebsd"
     GOARCH: "arm64"
-    CGO_ENABLED: 0
     FILE_OUTPUT: "freebsd-arm"
 
 build_darwin_arm64:
@@ -82,7 +78,6 @@ build_darwin_arm64:
   variables:
     GOOS: "darwin"
     GOARCH: "arm64"
-    CGO_ENABLED: 0
     FILE_OUTPUT: "mac-arm"
 
 
