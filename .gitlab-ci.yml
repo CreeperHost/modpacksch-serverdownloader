@@ -4,70 +4,101 @@ default:
 before_script:
   - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
 
+stages:
+  - build
+  - package
+
 .build:
   stage: build
   script:
     - go get github.com/cavaliercoder/grab@v2.0.0
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
-    - go build -ldflags "-X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o $FILE_OUTPUT
-#    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"'
+    - mkdir -p ./out
+    - go build -ldflags "-X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o "./out/$FILE_OUTPUT"
+  #    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"'
   artifacts:
     paths:
-      - $FILE_OUTPUT
-    expire_in: 1 day
+      - "./out/$FILE_OUTPUT"
+    expire_in: 5 minutes
 
 build_windows:
+  stage: build
   extends: .build
   variables:
     GOOS: "windows"
     GOARCH: "amd64"
     CGO_ENABLED: 0
-    FILE_OUTPUT: $GOOS-$GOARCH.exe
+    FILE_OUTPUT: "windows.exe"
 
 build_linux_amd64:
+  stage: build
   extends: .build
   variables:
     GOOS: "linux"
     GOARCH: "amd64"
     CGO_ENABLED: 0
-    FILE_OUTPUT: $GOOS-$GOARCH
+    FILE_OUTPUT: "linux"
 
 build_freebsd_amd64:
+  stage: build
   extends: .build
   variables:
     GOOS: "freebsd"
     GOARCH: "amd64"
     CGO_ENABLED: 0
-    FILE_OUTPUT: $GOOS-$GOARCH
+    FILE_OUTPUT: "freebsd"
 
 build_darwin_amd64:
+  stage: build
   extends: .build
   variables:
     GOOS: "darwin"
     GOARCH: "amd64"
     CGO_ENABLED: 0
-    FILE_OUTPUT: $GOOS-$GOARCH
+    FILE_OUTPUT: "mac"
 
 build_linux_arm64:
+  stage: build
   extends: .build
   variables:
     GOOS: "linux"
     GOARCH: "arm64"
     CGO_ENABLED: 0
-    FILE_OUTPUT: $GOOS-$GOARCH
+    FILE_OUTPUT: "linux-arm"
 
 build_freebsd_arm64:
+  stage: build
   extends: .build
   variables:
     GOOS: "freebsd"
     GOARCH: "arm64"
     CGO_ENABLED: 0
-    FILE_OUTPUT: $GOOS-$GOARCH
+    FILE_OUTPUT: "freebsd-arm"
 
 build_darwin_arm64:
+  stage: build
   extends: .build
   variables:
     GOOS: "darwin"
     GOARCH: "arm64"
     CGO_ENABLED: 0
-    FILE_OUTPUT: $GOOS-$GOARCH
+    FILE_OUTPUT: "mac-arm"
+
+
+package:
+  stage: package
+  script:
+    - echo "packaging everything here"
+  needs:
+    - build_windows
+    - build_linux_amd64
+    - build_freebsd_amd64
+    - build_darwin_amd64
+    - build_linux_arm64
+    - build_freebsd_arm64
+    - build_darwin_arm64
+  artifacts:
+    name: all-artifacts
+    paths:
+      - "./out/**"
+    expire_in: 1 week
