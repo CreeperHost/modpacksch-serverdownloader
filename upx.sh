@@ -1,6 +1,6 @@
 #!/bin/bash
 
-array=(windows.exe windows-arm.exe linux linux-arm mac mac-arm)
+array=(windows.exe linux mac)
 chmod +x upx
 for i in "${array[@]}"; do
   ./upx "binaries/$i"
