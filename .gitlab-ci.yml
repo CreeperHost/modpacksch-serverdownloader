@@ -2,7 +2,7 @@ default:
   image: golang:1.16
 
 before_script:
-  - apt-get update && apt-get install build-essential gcc -y
+  - apt-get update && apt-get install wget -y
   - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
 
 stages:
@@ -12,12 +12,12 @@ stages:
 .build:
   stage: build
   variables:
-    CGO_ENABLED: 1
+    CGO_ENABLED: 0
   script:
     - go get github.com/cavaliercoder/grab@v2.0.0
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - mkdir -p ./out
-    - go build -compiler gccgo -gccgoflags "-s -w -X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o "./out/$FILE_OUTPUT"
+    - go build -ldflags "-s -w -X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o "./out/$FILE_OUTPUT"
   #    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"'
   artifacts:
     paths:
@@ -85,6 +85,9 @@ package:
   stage: package
   script:
     - echo "packaging everything here"
+    - wget https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz
+    - tar -xf upx-3.96-amd64_linux.tar.xz "upx-3.96-amd64_linux/upx" --strip-components=1
+    - chmod +x upx.sh && ./upx.sh
   needs:
     - build_windows
     - build_linux_amd64
