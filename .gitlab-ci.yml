@@ -85,8 +85,6 @@ package:
   stage: package
   script:
     - echo "packaging everything here"
-    - wget https://github.com/upx/upx/releases/download/v3.96/upx-3.96-amd64_linux.tar.xz
-    - tar -xf upx-3.96-amd64_linux.tar.xz "upx-3.96-amd64_linux/upx" --strip-components=1
     - chmod +x upx.sh && ./upx.sh
   needs:
     - build_windows
