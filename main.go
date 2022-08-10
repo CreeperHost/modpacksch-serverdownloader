@@ -31,8 +31,8 @@ const BaseModpackURL = BaseAPIURL + "%s/modpack/"
 const SearchURL = BaseModpackURL + "search/5?term="
 
 var (
-	VerStr    string
-	CommitStr string
+	verStr    string
+	commitStr string
 
 	downloads  []Download
 	inProgress = 0
@@ -162,8 +162,8 @@ func PrintUsage(filename string) {
 	println(" |_| |_| |_|\\___/ \\__,_| .__/ \\__,_|\\___|_|\\_\\___(_)___|_| |_|")
 	println("                       | |                                    ")
 	println("                       |_|                                    ")
-	println(" modpacks.ch server downloader golang - build " + VerStr)
-	println(" based on commit " + CommitStr)
+	println(" modpacks.ch server downloader golang - build " + verStr)
+	println(" based on commit " + commitStr)
 	println()
 	println("Usage:")
 	if err == nil {
