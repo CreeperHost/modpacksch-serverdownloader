@@ -85,7 +85,7 @@ package:
   stage: package
   script:
     - echo "packaging everything here"
-    - chmod +x upx.sh && ./upx.sh
+#    - chmod +x upx.sh && ./upx.sh
   needs:
     - build_windows
     - build_linux_amd64
