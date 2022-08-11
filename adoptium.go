@@ -228,9 +228,14 @@ func (self *AdoptiumJavaProvider) GetLatestAdoptiumRelease(architecture string, 
 }
 
 func GetAdoptiumQueryProperties(architecture string, jre bool) string {
-	os := runtime.GOOS
-	if os == "darwin" {
-		os = "mac"
+	goOS := runtime.GOOS
+	if goOS == "darwin" {
+		goOS = "mac"
+	}
+	if goOS == "linux" {
+		if _, err := os.Stat("/etc/alpine-release"); !os.IsNotExist(err) {
+			goOS = "alpine-linux"
+		}
 	}
 	if architecture == "amd64" {
 		architecture = "x64"
@@ -253,7 +258,7 @@ func GetAdoptiumQueryProperties(architecture string, jre bool) string {
 		"&jvm_impl=hotspot" +
 		"&heap_size=normal" +
 		"&architecture=" + architecture +
-		"&os=" + os
+		"&os=" + goOS
 }
 
 //endregion
