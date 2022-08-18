@@ -394,7 +394,6 @@ func getOrBlank(URL string) string {
 func GetMirrorFor(urlStr string, fallback string) string {
 	mirrors := GetMirrors()
 	baseUrlStr := strings.Replace(urlStr, "https://files.minecraftforge.net/maven/", "", 1)
-	baseUrlStr = strings.Replace(baseUrlStr, "https://apps.modpacks.ch/versions/", "", 1)
 	baseUrlStr = strings.Replace(baseUrlStr, "https://maven.minecraftforge.net/", "", 1)
 	fullUrl := fallback + urlStr
 	for _, mirror := range mirrors {
