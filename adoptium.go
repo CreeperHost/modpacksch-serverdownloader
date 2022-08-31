@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -115,7 +116,7 @@ func (self *AdoptiumJavaProvider) GetDownloads(installPath string) []Download {
 	version := InstallProperties{rel, &binary, &fullPath}
 	self.InstallProps = &version
 
-	downloads = append(downloads, Download{jrePath, *parsedUrl, archiveName, "sha256", binary.Package.Checksum, fullPath})
+	downloads = append(downloads, Download{"jre", *parsedUrl, archiveName, "sha256", binary.Package.Checksum, fullPath})
 
 	return downloads
 }
@@ -161,11 +162,11 @@ func (self *AdoptiumJavaProvider) GetJavaPath(installPath string) string {
 		binFolder = "bin"
 	case "darwin":
 		executable = "java"
-		binFolder = path.Join("Contents", "Home", "bin")
+		binFolder = filepath.Join("Contents", "Home", "bin")
 	}
 
 	if self.InstallProps != nil {
-		return path.Join(installPath,
+		return filepath.Join(installPath,
 			"jre",
 			self.InstallProps.Release.ReleaseName+"-"+self.InstallProps.Binary.ImageType,
 			binFolder,
@@ -227,9 +228,14 @@ func (self *AdoptiumJavaProvider) GetLatestAdoptiumRelease(architecture string, 
 }
 
 func GetAdoptiumQueryProperties(architecture string, jre bool) string {
-	os := runtime.GOOS
-	if os == "darwin" {
-		os = "mac"
+	goOS := runtime.GOOS
+	if goOS == "darwin" {
+		goOS = "mac"
+	}
+	if goOS == "linux" {
+		if _, err := os.Stat("/etc/alpine-release"); !os.IsNotExist(err) {
+			goOS = "alpine-linux"
+		}
 	}
 	if architecture == "amd64" {
 		architecture = "x64"
@@ -252,7 +258,7 @@ func GetAdoptiumQueryProperties(architecture string, jre bool) string {
 		"&jvm_impl=hotspot" +
 		"&heap_size=normal" +
 		"&architecture=" + architecture +
-		"&os=" + os
+		"&os=" + goOS
 }
 
 //endregion

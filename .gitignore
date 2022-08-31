@@ -9,3 +9,7 @@ out/
 testplz/
 
 .vscode/
+
+builds/
+
+test/

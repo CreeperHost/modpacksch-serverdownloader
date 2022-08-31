@@ -97,7 +97,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	universalName := fmt.Sprintf("forge-%s-universal.jar", versionStr)
 	universalNameOther := fmt.Sprintf("forge-%s-universal.jar", versionStrOther)
 	forgeUrl := fmt.Sprintf(forgeUrlUniversalJar, versionStr, universalName)
-	forgeUrl = GetMirrorFor(forgeUrl, "https://apps.modpacks.ch/versions/")
+	forgeUrl = GetMirrorFor(forgeUrl, "https://maven.creeperhost.net/")
 	forgeUrlOther := fmt.Sprintf(forgeUrlUniversalJar, versionStrOther, universalNameOther)
 	forgeUrlJSON := fmt.Sprintf(forgeUrlInstallJSON, versionStr, versionStr)
 	forgeUrlJSONOther := fmt.Sprintf(forgeUrlInstallJSON, versionStrOther, versionStrOther)
@@ -185,12 +185,12 @@ func (f ForgeUniversal) GetLaunchJar(installPath string) (string, []string) {
 const versionFmt = "%s-%s"
 const versionFmtOther = "%s-%s-%s"
 
-const forgeUrlUniversalJar = "https://apps.modpacks.ch/versions/net/minecraftforge/forge/%s/%s"
-const forgeUrlInstallJar = "https://apps.modpacks.ch/versions/net/minecraftforge/forge/%s/%s"
-const forgeUrlInstallJSON = "https://apps.modpacks.ch/versions/net/minecraftforge/forge/%s/forge-%s.json"
+const forgeUrlUniversalJar = "https://maven.creeperhost.net/net/minecraftforge/forge/%s/%s"
+const forgeUrlInstallJar = "https://maven.creeperhost.net/net/minecraftforge/forge/%s/%s"
+const forgeUrlInstallJSON = "https://maven.creeperhost.net/net/minecraftforge/forge/%s/forge-%s.json"
 
 func GetMirrors() []string {
-	return []string{"https://maven.creeperhost.net/", "https://libraries.minecraft.net/", "https://apps.modpacks.ch/versions/"}
+	return []string{"https://maven.creeperhost.net/", "https://libraries.minecraft.net/"}
 }
 
 type ForgeInstall struct {
