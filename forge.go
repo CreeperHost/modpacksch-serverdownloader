@@ -97,7 +97,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	universalName := fmt.Sprintf("forge-%s-universal.jar", versionStr)
 	universalNameOther := fmt.Sprintf("forge-%s-universal.jar", versionStrOther)
 	forgeUrl := fmt.Sprintf(forgeUrlUniversalJar, versionStr, universalName)
-	forgeUrl = GetMirrorFor(forgeUrl, "https://maven.creeperhost.net/")
+	forgeUrl = GetMirrorFor(forgeUrl, "https://apps.modpacks.ch/versions/")
 	forgeUrlOther := fmt.Sprintf(forgeUrlUniversalJar, versionStrOther, universalNameOther)
 	forgeUrlJSON := fmt.Sprintf(forgeUrlInstallJSON, versionStr, versionStr)
 	forgeUrlJSONOther := fmt.Sprintf(forgeUrlInstallJSON, versionStrOther, versionStrOther)
