@@ -397,7 +397,7 @@ func GetMirrorFor(urlStr string, fallback string) string {
 	baseUrlStr = strings.Replace(baseUrlStr, "https://apps.modpacks.ch/versions/", "", 1)
 	baseUrlStr = strings.Replace(baseUrlStr, "https://maven.minecraftforge.net/", "", 1)
 	baseUrlStr = strings.Replace(baseUrlStr, "https://maven.creeperhost.net/", "", 1)
-	fullUrl := fallback + urlStr
+	fullUrl := fallback + baseUrlStr
 	for _, mirror := range mirrors {
 		newStr := mirror + baseUrlStr
 		if FileOnServer(newStr) {
