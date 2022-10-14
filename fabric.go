@@ -92,7 +92,7 @@ func (f Fabric) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f Fabric) Install(installPath string) bool {
+func (f Fabric) Install(installPath string, java JavaProvider) bool {
 	log.Println("Installing Fabric")
 	serverName := fmt.Sprintf("fabric-%s-%s-server-launch.jar", f.Minecraft.RawVersion, f.FabricVersion.RawVersion)
 	meta := f.getMeta()

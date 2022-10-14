@@ -162,7 +162,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f ForgeUniversal) Install(installPath string) bool {
+func (f ForgeUniversal) Install(installPath string, java JavaProvider) bool {
 	return true
 }
 
@@ -266,12 +266,12 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f ForgeInstall) Install(installPath string) bool {
+func (f ForgeInstall) Install(installPath string, java JavaProvider) bool {
 	log.Println("Running Forge installer")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
 	LogIfVerbose("Running java -jar %s --installServer", installerName)
-	cmd := exec.Command("java", "-jar", installerName, "--installServer")
+	cmd := exec.Command(java.GetJavaPath(installPath), "-jar", installerName, "--installServer")
 	cmd.Dir = installPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -393,7 +393,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f ForgeInJar) Install(installPath string) bool {
+func (f ForgeInJar) Install(installPath string, java JavaProvider) bool {
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	serverNameDownloaded := fmt.Sprintf("forge-%s-universal.zip", versionStr)
 	if f.Version.Minecraft.RawVersion == "1.2.5" {
