@@ -13,3 +13,5 @@ testplz/
 builds/
 
 test/
+
+**/serverinstall_*

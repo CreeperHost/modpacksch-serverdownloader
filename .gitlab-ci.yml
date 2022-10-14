@@ -1,5 +1,5 @@
 default:
-  image: golang:1.16
+  image: golang:1.19
 
 before_script:
   - apt-get update && apt-get install wget -y
