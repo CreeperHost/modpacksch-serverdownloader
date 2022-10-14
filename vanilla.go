@@ -20,7 +20,7 @@ func (m Minecraft) GetDownloads(installPath string) []Download {
 	return []Download{serverDownload}
 }
 
-func (m Minecraft) Install(installPath string) bool {
+func (m Minecraft) Install(installPath string, java JavaProvider) bool {
 	return true
 }
 
