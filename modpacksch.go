@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -180,11 +179,11 @@ func (v VersionInfo) WriteJson(installPath string) bool {
 		return false
 	}
 
-	stringRet, err := ioutil.ReadAll(resp.Body)
+	stringRet, err := io.ReadAll(resp.Body)
 
 	defer resp.Body.Close()
 
-	return ioutil.WriteFile(path.Join(installPath, "version.json"), stringRet, 0644) == nil
+	return os.WriteFile(path.Join(installPath, "version.json"), stringRet, 0644) == nil
 }
 
 func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java JavaProvider) {
@@ -233,14 +232,14 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 			"\"" + java.GetJavaPath("") + "\" -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
 		filename += ".sh"
 	}
-	if err := ioutil.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
+	if err := os.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
 		log.Println(fmt.Sprintf("Error occurred whilst creating launch script: %v", err))
 	}
 }
 
 func GetVersionInfoFromFile(file string) (error, VersionInfo) {
 	ret := VersionInfo{}
-	bytes, err := ioutil.ReadFile(file)
+	bytes, err := os.ReadFile(file)
 	if err != nil {
 		return err, ret
 	}

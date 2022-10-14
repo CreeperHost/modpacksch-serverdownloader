@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -533,7 +533,7 @@ func APICall(url string, val interface{}) error {
 		return err
 	}
 
-	stringRet, err := ioutil.ReadAll(resp.Body)
+	stringRet, err := io.ReadAll(resp.Body)
 
 	if err != nil {
 		return err

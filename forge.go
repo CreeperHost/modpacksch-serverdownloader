@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -125,7 +125,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 		resp, err := http.Get(forgeUrlJSON)
 		if err == nil {
 			defer resp.Body.Close()
-			bytes, err := ioutil.ReadAll(resp.Body)
+			bytes, err := io.ReadAll(resp.Body)
 			if err == nil {
 				rawForgeJSON = bytes
 			}
@@ -221,7 +221,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 		resp, err := http.Get(forgeUrlJSON)
 		if err == nil {
 			defer resp.Body.Close()
-			bytes, err := ioutil.ReadAll(resp.Body)
+			bytes, err := io.ReadAll(resp.Body)
 			if err == nil {
 				rawForgeJSON = bytes
 			}
