@@ -449,9 +449,9 @@ Loop:
 	}
 
 	// TODO, do this before ModLoaders and give them this JRE to use?
-	//java.Install(installPath)
+	java.Install(installPath)
 
-	//ml.Install(installPath, java)
+	ml.Install(installPath, java)
 
 	versionInfo.WriteJson(installPath)
 
