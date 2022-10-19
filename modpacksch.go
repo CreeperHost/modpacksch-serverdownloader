@@ -96,7 +96,12 @@ type Download struct {
 
 func GetModpack(id int) (error, Modpack) {
 	ret := Modpack{}
-	newUrl := fmt.Sprintf(BaseModpackURL+"%d", apiKey, id)
+	var newUrl string
+	if Options.Curseforge {
+		newUrl = fmt.Sprintf(BaseCurseforgeURL+"%d", id)
+	} else {
+		newUrl = fmt.Sprintf(BaseModpackURL+"%d", apiKey, id)
+	}
 	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
@@ -133,7 +138,13 @@ func (m Modpack) GetVersion(versionId int) (error, VersionInfo) {
 		return errors.New("version does not exist"), ret
 	}
 
-	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", apiKey, m.ID, version.ID)
+	var newUrl string
+	if Options.Curseforge {
+		newUrl = fmt.Sprintf(BaseCurseforgeURL+"%d/%d", m.ID, version.ID)
+	} else {
+		newUrl = fmt.Sprintf(BaseModpackURL+"%d/%d", apiKey, m.ID, version.ID)
+	}
+
 	err := APICall(newUrl, &ret)
 	if err != nil {
 		return err, ret
@@ -168,7 +179,12 @@ func (v VersionInfo) GetTargetVersion(targetType string) *string {
 }
 
 func (v VersionInfo) WriteJson(installPath string) bool {
-	newUrl := fmt.Sprintf(BaseModpackURL+"%d/%d", apiKey, v.ParentId, v.ID)
+	var newUrl string
+	if Options.Curseforge {
+		newUrl = fmt.Sprintf(BaseCurseforgeURL+"%d/%d", v.ParentId, v.ID)
+	} else {
+		newUrl = fmt.Sprintf(BaseModpackURL+"%d/%d", apiKey, v.ParentId, v.ID)
+	}
 	req, err := http.NewRequest("GET", newUrl, nil)
 	if err != nil {
 		return false
@@ -193,6 +209,14 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 		jarStr = "-jar " + mainJar
 	}
 	jarStr += strings.Join(jvmArgs, " ")
+
+	// Hacky fix for curseforge packs
+	if v.Specs.Minimum == 0 {
+		v.Specs.Minimum = 3072
+	}
+	if v.Specs.Recommend == 0 {
+		v.Specs.Recommend = 4096
+	}
 	launch := fmt.Sprintf("-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx%dM -Xms%dM %s nogui", v.Specs.Recommend, v.Specs.Minimum, jarStr)
 	var script string
 	filename := "start"
@@ -216,8 +240,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 			"IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
 			"echo eula=true>eula.txt\r\n" +
 			":END\r\n" +
-			"start \"FTB Server\" \"" + java.GetJavaPath("") + "\" -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch + "\r\n" +
-			"pause"
+			"start \"FTB Server\" \"" + java.GetJavaPath("") + "\" -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
 		filename += ".bat"
 	} else {
 		script = "#!/bin/bash\n" +

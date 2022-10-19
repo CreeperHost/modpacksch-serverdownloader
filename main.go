@@ -28,6 +28,7 @@ var client = &http.Client{}
 
 const BaseAPIURL = "https://api.modpacks.ch/"
 const BaseModpackURL = BaseAPIURL + "%s/modpack/"
+const BaseCurseforgeURL = BaseAPIURL + "public/curseforge/"
 const SearchURL = BaseModpackURL + "search/5?term="
 
 var (
@@ -50,6 +51,7 @@ var Options struct {
 	Integrity       bool   `help:"Do a full integrity check, even on files not changed by the update. integrityupdate assumed. Default: true"`
 	Verbose         bool   `help:"Be a bit noisier on actions taken. Default: false"`
 	Latest          bool   `help:"Install latest, ignoring any version in the file name or arguments. Default: false"`
+	Curseforge      bool   `help:"Specifies that pack is a Curseforge modpack"`
 	Help            bool   `help:"This help"`
 }
 
@@ -68,6 +70,7 @@ func main() {
 	Options.Verbose = false
 	Options.Integrity = true
 	Options.Latest = false
+	Options.Curseforge = false
 
 	Options.Help = false
 
@@ -454,6 +457,39 @@ Loop:
 
 	if !Options.Noscript {
 		versionInfo.WriteStartScript(installPath, ml, java)
+	}
+	if Options.Curseforge {
+		err = extractZip("", "overrides.zip")
+		if err != nil {
+			log.Fatal("Error extracting overrides.zip\n", err)
+		}
+		err := filepath.Walk("overrides", func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
+			}
+			strippedPath := strings.ReplaceAll(path, "overrides"+string(os.PathSeparator), "")
+			if info.IsDir() {
+				if _, err = os.Stat(strippedPath); errors.Is(err, os.ErrNotExist) {
+					err = os.Mkdir(strippedPath, os.ModePerm)
+					if err != nil {
+						log.Fatal("Error creating directory\n", err)
+						return err
+					}
+				}
+				return nil
+			}
+			err = os.Rename(path, strippedPath)
+			if err != nil {
+				log.Fatal("Error moving file from overrides\n", err)
+				return err
+			}
+			return nil
+		})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		os.Remove("overrides.zip")
 	}
 
 	log.Printf("Installed!")
