@@ -209,6 +209,14 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 		jarStr = "-jar " + mainJar
 	}
 	jarStr += strings.Join(jvmArgs, " ")
+
+	// Hacky fix for curseforge packs
+	if v.Specs.Minimum == 0 {
+		v.Specs.Minimum = 3072
+	}
+	if v.Specs.Recommend == 0 {
+		v.Specs.Recommend = 4096
+	}
 	launch := fmt.Sprintf("-XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -Xmx%dM -Xms%dM %s nogui", v.Specs.Recommend, v.Specs.Minimum, jarStr)
 	var script string
 	filename := "start"
@@ -232,8 +240,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 			"IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
 			"echo eula=true>eula.txt\r\n" +
 			":END\r\n" +
-			"start \"FTB Server\" \"" + java.GetJavaPath("") + "\" -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch + "\r\n" +
-			"pause"
+			"start \"FTB Server\" \"" + java.GetJavaPath("") + "\" -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
 		filename += ".bat"
 	} else {
 		script = "#!/bin/bash\n" +
