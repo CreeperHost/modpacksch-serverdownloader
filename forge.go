@@ -271,7 +271,7 @@ func (f ForgeInstall) Install(installPath string, java JavaProvider) bool {
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
 	LogIfVerbose("Running java -jar %s --installServer", installerName)
-	cmd := exec.Command(java.GetJavaPath(installPath), "-jar", installerName, "--installServer")
+	cmd := exec.Command(java.GetJavaPath(""), "-jar", installerName, "--installServer")
 	cmd.Dir = installPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
