@@ -14,7 +14,6 @@ stages:
   variables:
     CGO_ENABLED: 0
   script:
-    - go get github.com/cavaliercoder/grab@v2.0.0
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - mkdir -p ./binaries
     - go build -ldflags "-s -w -X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o "./binaries/$FILE_OUTPUT"

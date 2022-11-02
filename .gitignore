@@ -16,3 +16,7 @@ test/
 
 **/serverinstall_*
 test-curse/
+
+sky/
+
+test-path/

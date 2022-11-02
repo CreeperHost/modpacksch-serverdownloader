@@ -21,7 +21,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cavaliercoder/grab"
+	"github.com/cavaliergopher/grab/v3"
 )
 
 var client = &http.Client{}
@@ -151,6 +151,7 @@ func main() {
 		versionFound = -2
 	}
 
+	fmt.Println(fmt.Sprintf("Server installer version %s commit %s", verStr, commitStr))
 	HandleLaunch(filename, packIdFound, versionFound)
 }
 

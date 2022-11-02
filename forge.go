@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cavaliercoder/grab"
+	"github.com/cavaliergopher/grab/v3"
 )
 
 func GetForge(modloader Target, mc Minecraft) (error, ModLoader) {
@@ -268,10 +268,12 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 
 func (f ForgeInstall) Install(installPath string, java JavaProvider) bool {
 	log.Println("Running Forge installer")
+
+	xmx := "2048M"
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
-	LogIfVerbose("Running java -jar %s --installServer", installerName)
-	cmd := exec.Command(java.GetJavaPath(""), "-jar", installerName, "--installServer")
+	LogIfVerbose("Running %s -Xmx%s -jar %s --installServer", java.GetJavaPath(""), xmx, installerName)
+	cmd := exec.Command(java.GetJavaPath(""), "-Xmx"+xmx, "-jar", installerName, "--installServer")
 	cmd.Dir = installPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
