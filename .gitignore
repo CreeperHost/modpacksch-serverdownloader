@@ -13,3 +13,6 @@ testplz/
 builds/
 
 test/
+
+**/serverinstall_*
+test-curse/

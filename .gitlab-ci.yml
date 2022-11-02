@@ -1,5 +1,5 @@
 default:
-  image: golang:1.16
+  image: golang:1.19
 
 before_script:
   - apt-get update && apt-get install wget -y
@@ -31,6 +31,14 @@ build_windows:
     GOOS: "windows"
     GOARCH: "amd64"
     FILE_OUTPUT: "windows.exe"
+    
+build_windows_arm64:
+  stage: build
+  extends: .build
+  variables:
+    GOOS: "windows"
+    GOARCH: "arm64"
+    FILE_OUTPUT: "windows-arm.exe"
 
 build_linux_amd64:
   stage: build

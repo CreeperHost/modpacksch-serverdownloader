@@ -2,7 +2,7 @@ package main
 
 type ModLoader interface {
 	GetDownloads(installPath string) []Download
-	Install(installPath string) bool
+	Install(installPath string, java JavaProvider) bool
 
 	// GetLaunchJar
 	// First return parameter describes the 'Main Jar'.

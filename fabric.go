@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -43,7 +43,7 @@ func (f *Fabric) getMeta() FabricMeta {
 		}
 
 		defer resp.Body.Close()
-		rawFabricBytes, err := ioutil.ReadAll(resp.Body)
+		rawFabricBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			log.Fatalf("Error getting fabric meta for Minecraft %s Fabric %s: %v", f.Minecraft.RawVersion, f.RawVersion, err)
 		}
@@ -92,7 +92,7 @@ func (f Fabric) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f Fabric) Install(installPath string) bool {
+func (f Fabric) Install(installPath string, java JavaProvider) bool {
 	log.Println("Installing Fabric")
 	serverName := fmt.Sprintf("fabric-%s-%s-server-launch.jar", f.Minecraft.RawVersion, f.FabricVersion.RawVersion)
 	meta := f.getMeta()
@@ -117,7 +117,7 @@ func (f Fabric) Install(installPath string) bool {
 		// handleerr
 	}
 
-	ioutil.WriteFile(path.Join(installPath, "fabric-server-launcher.properties"), []byte("serverJar="+serverDownload.Name+"\n"), 0644)
+	os.WriteFile(path.Join(installPath, "fabric-server-launcher.properties"), []byte("serverJar="+serverDownload.Name+"\n"), 0644)
 
 	mergeZips(jars, path.Join(installPath, serverName), false, meta.MainClass)
 

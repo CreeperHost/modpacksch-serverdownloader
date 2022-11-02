@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -146,7 +145,7 @@ func UnzipFileToMemory(archive string, filePath string) ([]byte, error) {
 	}
 	defer fileReader.Close()
 
-	bytes, err := ioutil.ReadAll(fileReader)
+	bytes, err := io.ReadAll(fileReader)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +187,7 @@ func (m Minecraft) GetVanillaVersion() (VanillaVersion, error) {
 	resp, err := http.Get(MinecraftMetaURL)
 	if err == nil {
 		defer resp.Body.Close()
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		if err == nil {
 			var manifest VanillaListManifest
 			err := json.Unmarshal(bytes, &manifest)
@@ -210,7 +209,7 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 	resp, err := http.Get(v.URL)
 	if err == nil {
 		defer resp.Body.Close()
-		bytes, err := ioutil.ReadAll(resp.Body)
+		bytes, err := io.ReadAll(resp.Body)
 		if err == nil {
 			vanillaManifest := VanillaManifest{}
 			err = json.Unmarshal(bytes, &vanillaManifest)
@@ -384,7 +383,7 @@ func getOrBlank(URL string) string {
 	}
 
 	defer resp.Body.Close()
-	bytesRead, err := ioutil.ReadAll(resp.Body)
+	bytesRead, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return ""
 	}
@@ -394,8 +393,10 @@ func getOrBlank(URL string) string {
 func GetMirrorFor(urlStr string, fallback string) string {
 	mirrors := GetMirrors()
 	baseUrlStr := strings.Replace(urlStr, "https://files.minecraftforge.net/maven/", "", 1)
+	baseUrlStr = strings.Replace(baseUrlStr, "https://apps.modpacks.ch/versions/", "", 1)
 	baseUrlStr = strings.Replace(baseUrlStr, "https://maven.minecraftforge.net/", "", 1)
-	fullUrl := fallback + urlStr
+	baseUrlStr = strings.Replace(baseUrlStr, "https://maven.creeperhost.net/", "", 1)
+	fullUrl := fallback + baseUrlStr
 	for _, mirror := range mirrors {
 		newStr := mirror + baseUrlStr
 		if FileOnServer(newStr) {

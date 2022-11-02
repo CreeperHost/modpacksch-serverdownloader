@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -97,7 +97,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	universalName := fmt.Sprintf("forge-%s-universal.jar", versionStr)
 	universalNameOther := fmt.Sprintf("forge-%s-universal.jar", versionStrOther)
 	forgeUrl := fmt.Sprintf(forgeUrlUniversalJar, versionStr, universalName)
-	forgeUrl = GetMirrorFor(forgeUrl, "https://maven.creeperhost.net/")
+	forgeUrl = GetMirrorFor(forgeUrl, "https://apps.modpacks.ch/versions/")
 	forgeUrlOther := fmt.Sprintf(forgeUrlUniversalJar, versionStrOther, universalNameOther)
 	forgeUrlJSON := fmt.Sprintf(forgeUrlInstallJSON, versionStr, versionStr)
 	forgeUrlJSONOther := fmt.Sprintf(forgeUrlInstallJSON, versionStrOther, versionStrOther)
@@ -125,7 +125,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 		resp, err := http.Get(forgeUrlJSON)
 		if err == nil {
 			defer resp.Body.Close()
-			bytes, err := ioutil.ReadAll(resp.Body)
+			bytes, err := io.ReadAll(resp.Body)
 			if err == nil {
 				rawForgeJSON = bytes
 			}
@@ -162,7 +162,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f ForgeUniversal) Install(installPath string) bool {
+func (f ForgeUniversal) Install(installPath string, java JavaProvider) bool {
 	return true
 }
 
@@ -221,7 +221,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 		resp, err := http.Get(forgeUrlJSON)
 		if err == nil {
 			defer resp.Body.Close()
-			bytes, err := ioutil.ReadAll(resp.Body)
+			bytes, err := io.ReadAll(resp.Body)
 			if err == nil {
 				rawForgeJSON = bytes
 			}
@@ -266,12 +266,12 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f ForgeInstall) Install(installPath string) bool {
+func (f ForgeInstall) Install(installPath string, java JavaProvider) bool {
 	log.Println("Running Forge installer")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
 	LogIfVerbose("Running java -jar %s --installServer", installerName)
-	cmd := exec.Command("java", "-jar", installerName, "--installServer")
+	cmd := exec.Command(java.GetJavaPath(""), "-jar", installerName, "--installServer")
 	cmd.Dir = installPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -393,7 +393,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 	return downloads
 }
 
-func (f ForgeInJar) Install(installPath string) bool {
+func (f ForgeInJar) Install(installPath string, java JavaProvider) bool {
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	serverNameDownloaded := fmt.Sprintf("forge-%s-universal.zip", versionStr)
 	if f.Version.Minecraft.RawVersion == "1.2.5" {
