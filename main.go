@@ -32,8 +32,8 @@ const BaseCurseforgeURL = BaseAPIURL + "public/curseforge/"
 const SearchURL = BaseModpackURL + "search/5?term="
 
 var (
-	verStr    string
-	commitStr string
+	verStr    = "dev"
+	commitStr = "dev"
 
 	downloads  []Download
 	inProgress = 0
