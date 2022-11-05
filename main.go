@@ -6,12 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cavaliergopher/grab"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -20,8 +20,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/cavaliergopher/grab/v3"
 )
 
 var client = &http.Client{}
@@ -295,6 +293,8 @@ func HandleLaunch(file string, found int, versionFound int) {
 		var newFiles []Download
 		var oldDeletedFiles []Download
 		var integrityFailures []Download
+
+		mcCleanup(installPath)
 
 		for _, oldDown := range oldDownloads {
 			for i := lastFound + 1; i < downloadsLen; i++ {

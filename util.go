@@ -534,3 +534,21 @@ func extractTarGz(dest string, zipPath string) error {
 	file.Close()
 	return nil
 }
+
+func mcCleanup(installPath string) {
+	fmt.Println("Running clean up")
+	if !Options.Nojava {
+		if _, err := os.Stat(filepath.Join(installPath, "jre")); !os.IsNotExist(err) {
+			err = os.RemoveAll(filepath.Join(installPath, "jre"))
+			if err != nil {
+				fmt.Println("[ERROR] Unable to remove JRE folder\n", err)
+			}
+		}
+	}
+	if _, err := os.Stat(filepath.Join(installPath, "libraries")); !os.IsNotExist(err) {
+		err = os.RemoveAll(filepath.Join(installPath, "libraries"))
+		if err != nil {
+			fmt.Println("[ERROR] Unable to remove libraries folder\n", err)
+		}
+	}
+}
