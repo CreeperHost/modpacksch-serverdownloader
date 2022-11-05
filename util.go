@@ -216,7 +216,7 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 			if err == nil {
 				URL, err := url.Parse(vanillaManifest.Downloads.Server.URL)
 				if err == nil {
-					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", "sha1", vanillaManifest.Downloads.Server.SHA1, path.Join("", "minecraft_server."+v.ID+".jar")}
+					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", "sha1", vanillaManifest.Downloads.Server.SHA1, filepath.Join("", "minecraft_server."+v.ID+".jar")}
 				}
 			}
 		}
@@ -370,7 +370,7 @@ func listDirectories(directories []string) []string {
 	directoryReturn = make([]string, len(allFiles))
 
 	for i, file := range allFiles {
-		directoryReturn[i] = path.Join(file.directory, file.Name())
+		directoryReturn[i] = filepath.Join(file.directory, file.Name())
 	}
 
 	return directoryReturn

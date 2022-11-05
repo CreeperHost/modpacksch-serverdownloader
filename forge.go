@@ -117,7 +117,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 		if resp.IsComplete() {
 			resp.Wait()
 		}
-		bytes, err := UnzipFileToMemory(path.Join(installPath, universalName), "version.json")
+		bytes, err := UnzipFileToMemory(filepath.Join(installPath, universalName), "version.json")
 		if err == nil {
 			rawForgeJSON = bytes
 		}
@@ -136,7 +136,7 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 	if err != nil {
 		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
-	downloads := []Download{{"", *URL, universalName, "", "", path.Join("", universalName)}}
+	downloads := []Download{{"", *URL, universalName, "", "", filepath.Join("", universalName)}}
 
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJson{}
@@ -168,15 +168,15 @@ func (f ForgeUniversal) Install(installPath string, java JavaProvider) bool {
 
 func (f ForgeUniversal) GetLaunchJar(installPath string) (string, []string) {
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+	if _, err := os.Stat(filepath.Join(installPath, forgeJar)); err == nil {
 		return forgeJar, nil
 	}
 	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+	if _, err := os.Stat(filepath.Join(installPath, forgeJar)); err == nil {
 		return forgeJar, nil
 	}
 	forgeJar = fmt.Sprintf("forge-%s-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion, f.Version.Minecraft.RawVersion)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+	if _, err := os.Stat(filepath.Join(installPath, forgeJar)); err == nil {
 		return forgeJar, nil
 	}
 	return "insert-jar-here.jar", nil
@@ -213,7 +213,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 		if resp.IsComplete() {
 			resp.Wait()
 		}
-		bytes, err := UnzipFileToMemory(path.Join(installPath, installerName), "version.json")
+		bytes, err := UnzipFileToMemory(filepath.Join(installPath, installerName), "version.json")
 		if err == nil {
 			rawForgeJSON = bytes
 		}
@@ -228,7 +228,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 		}
 	}
 
-	bytes, err := UnzipFileToMemory(path.Join(installPath, installerName), "install_profile.json")
+	bytes, err := UnzipFileToMemory(filepath.Join(installPath, installerName), "install_profile.json")
 	if err == nil {
 		rawForgeInstallJSON = bytes
 	}
@@ -237,7 +237,7 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 	if err != nil {
 		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
-	downloads := []Download{{"", *URL, installerName, "", "", path.Join("", installerName+".jar")}}
+	downloads := []Download{{"", *URL, installerName, "", "", filepath.Join("", installerName+".jar")}}
 
 	if len(rawForgeJSON) > 0 {
 		versionForge := VersionJsonFG3{}
@@ -291,19 +291,19 @@ func (f ForgeInstall) GetLaunchJar(installPath string) (string, []string) {
 	mcVer := f.Version.Minecraft.RawVersion
 	forgeVer := f.Version.RawVersion
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", mcVer, forgeVer)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+	if _, err := os.Stat(filepath.Join(installPath, forgeJar)); err == nil {
 		return forgeJar, nil
 	}
 	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", mcVer, forgeVer)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+	if _, err := os.Stat(filepath.Join(installPath, forgeJar)); err == nil {
 		return forgeJar, nil
 	}
 
 	// Detect Modular forge from the 'user_jvm_args.txt' file.
-	if _, err := os.Stat(path.Join(installPath, "user_jvm_args.txt")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(installPath, "user_jvm_args.txt")); !os.IsNotExist(err) {
 		// _YEEEET_ OUTTA HERE WITH YO SHEEEET
-		os.Remove(path.Join(installPath, "run.bat"))
-		os.Remove(path.Join(installPath, "run.sh"))
+		os.Remove(filepath.Join(installPath, "run.bat"))
+		os.Remove(filepath.Join(installPath, "run.sh"))
 
 		var argsTxt string
 		switch runtime.GOOS {
@@ -315,7 +315,7 @@ func (f ForgeInstall) GetLaunchJar(installPath string) (string, []string) {
 
 		var jvmArgs []string
 		jvmArgs = append(jvmArgs, "@user_jvm_args.txt")
-		jvmArgs = append(jvmArgs, "@"+path.Join("libraries", "net", "minecraftforge", "forge", mcVer+"-"+forgeVer, argsTxt))
+		jvmArgs = append(jvmArgs, "@"+filepath.Join("libraries", "net", "minecraftforge", "forge", mcVer+"-"+forgeVer, argsTxt))
 
 		return "", jvmArgs
 	}
@@ -379,7 +379,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 		libs["https://maven.creeperhost.net/org/scala-lang/scala-library/2.10.0/scala-library-2.10.0.jar"] = hashName{"scala-library.jar", "458d046151ad179c85429ed7420ffb1eaf6ddf85"}
 	}
 
-	downloads := []Download{serverDownload, {"", *URL, serverName, "", "", path.Join("", serverName)}}
+	downloads := []Download{serverDownload, {"", *URL, serverName, "", "", filepath.Join("", serverName)}}
 
 	for libUrl, lib := range libs {
 		URL, err := url.Parse(libUrl)
@@ -389,7 +389,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 			}
 		}
 		baseName := lib.name
-		downloads = append(downloads, Download{"lib/", *URL, baseName, "sha1", lib.hash, path.Join("lib/", baseName)})
+		downloads = append(downloads, Download{"lib/", *URL, baseName, "sha1", lib.hash, filepath.Join("lib/", baseName)})
 	}
 
 	return downloads
@@ -406,8 +406,8 @@ func (f ForgeInJar) Install(installPath string, java JavaProvider) bool {
 
 	directories := make([]string, 2)
 
-	directories[0] = path.Join(installPath, "instmods")
-	directories[1] = path.Join(installPath, "jarmods")
+	directories[0] = filepath.Join(installPath, "instmods")
+	directories[1] = filepath.Join(installPath, "jarmods")
 
 	jarMods := listDirectories(directories)
 
@@ -421,22 +421,22 @@ func (f ForgeInJar) Install(installPath string, java JavaProvider) bool {
 		// handleerr
 	}
 
-	mergeJars := []string{path.Join(installPath, serverDownload.Path, serverDownload.Name), path.Join(installPath, serverNameDownloaded)}
+	mergeJars := []string{filepath.Join(installPath, serverDownload.Path, serverDownload.Name), filepath.Join(installPath, serverNameDownloaded)}
 
 	mergeJars = append(mergeJars, jarMods...)
 
-	mergeZips(mergeJars, path.Join(installPath, serverName), true, "")
+	mergeZips(mergeJars, filepath.Join(installPath, serverName), true, "")
 
 	return true
 }
 
 func (f ForgeInJar) GetLaunchJar(installPath string) (string, []string) {
 	forgeJar := fmt.Sprintf("forge-%s-%s.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+	if _, err := os.Stat(filepath.Join(installPath, forgeJar)); err == nil {
 		return forgeJar, nil
 	}
 	forgeJar = fmt.Sprintf("forge-%s-%s-universal.jar", f.Version.Minecraft.RawVersion, f.Version.RawVersion)
-	if _, err := os.Stat(path.Join(installPath, forgeJar)); err == nil {
+	if _, err := os.Stat(filepath.Join(installPath, forgeJar)); err == nil {
 		return forgeJar, nil
 	}
 	return "insert-jar-here.jar", nil
@@ -465,7 +465,7 @@ func (v VersionJson) GetLibraryDownloads() []Download {
 		if len(artichoke.Hashes) > 0 {
 			hash = artichoke.Hashes[0]
 		}
-		downloads = append(downloads, Download{path.Join("libraries", dir), *actualUrl, file, "sha1", hash, path.Join("libraries", dir, file)})
+		downloads = append(downloads, Download{filepath.Join("libraries", dir), *actualUrl, file, "sha1", hash, filepath.Join("libraries", dir, file)})
 	}
 	return downloads
 }
@@ -522,7 +522,7 @@ func (v VersionJsonFG3) GetDownloads() []Download {
 			if err != nil {
 				continue
 			}
-			downloads = append(downloads, Download{path.Join("libraries", dir), *actualUrl, file, "sha1", artichoke.SHA1, path.Join("libraries", dir, file)})
+			downloads = append(downloads, Download{filepath.Join("libraries", dir), *actualUrl, file, "sha1", artichoke.SHA1, filepath.Join("libraries", dir, file)})
 		}
 	}
 	return downloads

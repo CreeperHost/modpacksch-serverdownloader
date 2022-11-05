@@ -219,7 +219,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 		}
 	}
 	if len(installPath) == 0 || installPath[0] != "/"[0] {
-		installPath = path.Join(".", installPath)
+		installPath = filepath.Join(".", installPath)
 	}
 	if _, err := os.Stat(installPath); os.IsNotExist(err) {
 		LogIfVerbose("Making folder %s\n", installPath)
@@ -233,7 +233,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 	}
 	upgrade := false
-	if _, err := os.Stat(path.Join(installPath, "version.json")); !os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(installPath, "version.json")); !os.IsNotExist(err) {
 		upgrade = true
 	}
 
@@ -260,7 +260,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 	}
 
 	if upgrade {
-		err, info := GetVersionInfoFromFile(path.Join(installPath, "version.json"))
+		err, info := GetVersionInfoFromFile(filepath.Join(installPath, "version.json"))
 		if err != nil {
 			if !QuestionYN(true, "An error occurred whilst trying to read the previous installation at %s: %v\nWould you like to continue anyway? You should probably delete folders with mods and configs in it, first!", installPath, err) {
 				log.Fatalf("Aborting due to corrupted previous installation")
@@ -356,13 +356,13 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 		log.Println("Deleting removed files...")
 		for _, down := range oldDeletedFiles {
-			filePath := path.Join(installPath, down.FullPath)
+			filePath := filepath.Join(installPath, down.FullPath)
 			LogIfVerbose("Removing %s\n", filePath)
 			if os.Remove(filePath) != nil {
 				log.Println("Error occurred whilst removing file " + filePath)
 				continue
 			}
-			tempPath := path.Join(installPath, down.Path)
+			tempPath := filepath.Join(installPath, down.Path)
 			dir, err := os.Open(tempPath)
 			empty := false
 			if err == nil {
@@ -397,7 +397,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 	modLoaderDls := ml.GetDownloads(installPath)
 
 	URL, _ := url.Parse("https://media.forgecdn.net/files/3557/251/Log4jPatcher-1.0.0.jar")
-	downloads = append(downloads, Download{"log4jfix/", *URL, "Log4jPatcher-1.0.0.jar", "sha1", "eb20584e179dc17b84b6b23fbda45485cd4ad7cc", path.Join("log4jfix/", "Log4jPatcher-1.0.0.jar")})
+	downloads = append(downloads, Download{"log4jfix/", *URL, "Log4jPatcher-1.0.0.jar", "sha1", "eb20584e179dc17b84b6b23fbda45485cd4ad7cc", filepath.Join("log4jfix/", "Log4jPatcher-1.0.0.jar")})
 
 	downloads = append(downloads, modLoaderDls...)
 
@@ -610,9 +610,9 @@ func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Resp
 		download := downloads[i]
 		tmpPath := download.Path
 		if !filepath.IsAbs(tmpPath) {
-			tmpPath = path.Join(dst, tmpPath)
+			tmpPath = filepath.Join(dst, tmpPath)
 		}
-		req, err := grab.NewRequest(path.Join(tmpPath, download.Name), download.URL.String())
+		req, err := grab.NewRequest(filepath.Join(tmpPath, download.Name), download.URL.String())
 		if err != nil {
 			return nil, err
 		}
