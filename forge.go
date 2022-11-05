@@ -11,11 +11,12 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 
-	"github.com/cavaliergopher/grab/v3"
+	"github.com/cavaliergopher/grab"
 )
 
 func GetForge(modloader Target, mc Minecraft) (error, ModLoader) {
@@ -268,22 +269,43 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 
 func (f ForgeInstall) Install(installPath string, java JavaProvider) bool {
 	log.Println("Running Forge installer")
-
+	retryCount := 0
+Forge:
 	xmx := "2048M"
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
-	LogIfVerbose("Running %s -Xmx%s -jar %s --installServer", java.GetJavaPath(""), xmx, installerName)
-	cmd := exec.Command(java.GetJavaPath(""), "-Xmx"+xmx, "-jar", installerName, "--installServer")
+	javaPath := java.GetJavaPath("")
+	if retryCount >= 2 {
+		log.Println("Install failed twice or more times, trying system Java")
+		javaPath = "java"
+	}
+	LogIfVerbose("Running %s -Xmx%s -jar %s --installServer", javaPath, xmx, installerName)
+	cmd := exec.Command(javaPath, "-Xmx"+xmx, "-jar", installerName, "--installServer")
 	cmd.Dir = installPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	err := cmd.Run()
-	if err != nil {
-		log.Println(fmt.Sprintf("Running forge installer failed with %s. You may wish to install forge %s for Minecraft %s manually", err, f.Version.RawVersion, f.Version.Minecraft.RawVersion))
+	if err := cmd.Start(); err != nil {
+		log.Fatal(fmt.Sprintf("Running forge installer failed with %s. You may wish to install forge %s for Minecraft %s manually", err, f.Version.RawVersion, f.Version.Minecraft.RawVersion))
 		return false
 	}
-	_ = os.Remove(path.Join(installPath, installerName) + ".log")
-	_ = os.Remove(path.Join(installPath, installerName))
+	if err := cmd.Wait(); err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok {
+			if exitErr.ExitCode() != 0 {
+				log.Println(fmt.Sprintf("Forge installer failed with exit code %d, retrying...", exitErr.ExitCode()))
+				retryCount++
+				if retryCount < 3 {
+					goto Forge
+				} else {
+					log.Fatal("Forge failed to install multiple times exiting...")
+					os.Exit(1)
+				}
+			}
+		} else {
+			log.Fatalf("cmd.Wait: %v", err)
+		}
+	}
+	_ = os.Remove(filepath.Join(installPath, installerName) + ".log")
+	_ = os.Remove(filepath.Join(installPath, installerName))
 	return true
 }
 
