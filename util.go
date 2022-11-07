@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pterm/pterm"
 	"io"
 	"log"
 	"net/http"
@@ -227,7 +228,7 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 func mergeZips(zips []string, destzip string, deleteAfter bool, mainClass string) {
 	zipfile, err := os.Create(destzip)
 	if err != nil {
-		log.Printf("Error opening %s for writing - running server may not work properly: %v\n", destzip, err)
+		pterm.Error.Println("Error opening %s for writing - running server may not work properly: %v\n", destzip, err)
 	}
 	buf := bufio.NewWriter(zipfile)
 	w := zip.NewWriter(buf)
@@ -241,7 +242,7 @@ func mergeZips(zips []string, destzip string, deleteAfter bool, mainClass string
 	for _, file := range zips {
 		r, err := zip.OpenReader(file)
 		if err != nil {
-			log.Printf("Error opening %s to merge into %s\n", file, destzip)
+			pterm.Error.Println("Error opening %s to merge into %s\n", file, destzip)
 			continue
 		}
 
@@ -436,7 +437,7 @@ func getKey() string {
 						}
 						foundStr = string(byteRead[lastIndex+1:])
 						foundStr = strings.TrimSpace(foundStr)
-						log.Println("Found private key, using instead of public")
+						pterm.Info.Println("Found private key, using instead of public")
 					}
 				}
 			}
@@ -464,7 +465,7 @@ func extractZip(dest string, zipPath string) error {
 			continue
 		}
 
-		log.Printf("Extracting %s -> %s", f.Name, destPath)
+		pterm.Debug.Printfln("Extracting %s -> %s", f.Name, destPath)
 
 		if err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm); err != nil {
 			return err
@@ -516,7 +517,7 @@ func extractTarGz(dest string, zipPath string) error {
 				return err
 			}
 		case tar.TypeReg:
-			log.Printf("Extracting %s -> %s", header.Name, destPath)
+			pterm.Debug.Printfln("Extracting %s -> %s", header.Name, destPath)
 			dstFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, header.FileInfo().Mode())
 			if err != nil {
 				return err
@@ -528,7 +529,7 @@ func extractTarGz(dest string, zipPath string) error {
 		case tar.TypeSymlink:
 			// Ignored.
 		default:
-			log.Printf("Unhandled type: %d %s", header.Typeflag, header.Name)
+			pterm.Error.Printfln("Unhandled type: %d %s", header.Typeflag, header.Name)
 		}
 	}
 	file.Close()
@@ -536,19 +537,19 @@ func extractTarGz(dest string, zipPath string) error {
 }
 
 func mcCleanup(installPath string) {
-	fmt.Println("Running clean up")
+	pterm.Info.Println("Running clean up")
 	if !Options.Nojava {
 		if _, err := os.Stat(filepath.Join(installPath, "jre")); !os.IsNotExist(err) {
 			err = os.RemoveAll(filepath.Join(installPath, "jre"))
 			if err != nil {
-				fmt.Println("[ERROR] Unable to remove JRE folder\n", err)
+				pterm.Error.Println("Unable to remove JRE folder\n", err)
 			}
 		}
 	}
 	if _, err := os.Stat(filepath.Join(installPath, "libraries")); !os.IsNotExist(err) {
 		err = os.RemoveAll(filepath.Join(installPath, "libraries"))
 		if err != nil {
-			fmt.Println("[ERROR] Unable to remove libraries folder\n", err)
+			pterm.Error.Println("Unable to remove libraries folder\n", err)
 		}
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/pterm/pterm"
 	"io"
 	"log"
 	"net/http"
@@ -276,32 +277,32 @@ Forge:
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
 	javaPath := java.GetJavaPath("")
 	if retryCount >= 2 {
-		log.Println("Install failed twice or more times, trying system Java")
+		pterm.Warning.Println("Install failed twice or more times, trying system Java")
 		javaPath = "java"
 	}
-	LogIfVerbose("Running %s -Xmx%s -jar %s --installServer", javaPath, xmx, installerName)
+	pterm.Debug.Printfln("Running %s -Xmx%s -jar %s --installServer", javaPath, xmx, installerName)
 	cmd := exec.Command(javaPath, "-Xmx"+xmx, "-jar", installerName, "--installServer")
 	cmd.Dir = installPath
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
-		log.Fatal(fmt.Sprintf("Running forge installer failed with %s. You may wish to install forge %s for Minecraft %s manually", err, f.Version.RawVersion, f.Version.Minecraft.RawVersion))
+		pterm.Fatal.Println(fmt.Sprintf("Running forge installer failed with %s. You may wish to install forge %s for Minecraft %s manually", err, f.Version.RawVersion, f.Version.Minecraft.RawVersion))
 		return false
 	}
 	if err := cmd.Wait(); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if exitErr.ExitCode() != 0 {
-				log.Println(fmt.Sprintf("Forge installer failed with exit code %d, retrying...", exitErr.ExitCode()))
+				pterm.Warning.Println(fmt.Sprintf("Forge installer failed with exit code %d, retrying...", exitErr.ExitCode()))
 				retryCount++
 				if retryCount < 3 {
 					goto Forge
 				} else {
-					log.Fatal("Forge failed to install multiple times exiting...")
+					pterm.Fatal.Println("Forge failed to install multiple times exiting...")
 					os.Exit(1)
 				}
 			}
 		} else {
-			log.Fatalf("cmd.Wait: %v", err)
+			pterm.Info.Printfln("cmd.Wait: %v", err)
 		}
 	}
 	_ = os.Remove(filepath.Join(installPath, installerName) + ".log")
@@ -359,7 +360,7 @@ type hashName struct {
 }
 
 func (f ForgeInJar) GetDownloads(installPath string) []Download {
-	log.Println("Getting downloads for Forge In Jar")
+	pterm.Info.Println("Getting downloads for Forge In Jar")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	serverName := fmt.Sprintf("forge-%s-universal.zip", versionStr)
 	if f.Version.Minecraft.RawVersion == "1.2.5" {
@@ -370,7 +371,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 
 	URL, err := url.Parse(forgeUrl)
 	if err != nil {
-		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
+		pterm.Fatal.Printfln("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
 
 	vanillaVer, err := f.Version.Minecraft.GetVanillaVersion()
@@ -407,7 +408,7 @@ func (f ForgeInJar) GetDownloads(installPath string) []Download {
 		URL, err := url.Parse(libUrl)
 		if err != nil {
 			if err != nil {
-				log.Fatalf("Couldn't download lib as error parsing URL somehow: URL: %s, Error: %v", libUrl, err)
+				pterm.Fatal.Printfln("Couldn't download lib as error parsing URL somehow: URL: %s, Error: %v", libUrl, err)
 			}
 		}
 		baseName := lib.name
