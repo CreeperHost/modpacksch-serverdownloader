@@ -57,6 +57,12 @@ var markerBytes = []byte("~~I'm not a bad downloader, slurp!~~")
 
 var apiKey = getKey()
 
+func init() {
+	os.Unsetenv("_JAVA_OPTIONS")
+	os.Unsetenv("JAVA_TOOL_OPTIONS")
+	os.Unsetenv("JAVA_OPTIONS")
+}
+
 func main() {
 	filename := filepath.Base(os.Args[0])
 
