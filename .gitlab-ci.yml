@@ -1,8 +1,8 @@
 default:
-  image: golang:1.19
+  image: golang:1.19-alpine
 
 before_script:
-  - apt-get update && apt-get install wget -y
+  - apk add --no-cache wget zip git
   - export VERBASE=`date "+%-y.%-m%-d.%-H%-M"`
 
 stages:
@@ -14,11 +14,9 @@ stages:
   variables:
     CGO_ENABLED: 0
   script:
-    - go get github.com/cavaliercoder/grab@v2.0.0
     - VER="${VERBASE}-${GOOS}-${GOARCH}"
     - mkdir -p ./binaries
     - go build -ldflags "-s -w -X 'main.commitStr=$CI_COMMIT_SHA' -X 'main.verStr=$VER'" -o "./binaries/$FILE_OUTPUT"
-  #    - 'curl --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file "binaries/${FILE_OUTPUT}" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/modpacksdownloader/${VERBASE}/serverinstaller-${FILE_OUTPUT}"'
   artifacts:
     paths:
       - "./binaries/$FILE_OUTPUT"
@@ -93,9 +91,11 @@ package:
   stage: package
   script:
     - echo "packaging everything here"
+    - zip -r server-installer-$CI_COMMIT_SHORT_SHA binaries/*
 #    - chmod +x upx.sh && ./upx.sh
   needs:
     - build_windows
+    - build_windows_arm64
     - build_linux_amd64
     - build_freebsd_amd64
     - build_darwin_amd64
@@ -106,4 +106,5 @@ package:
     name: all-artifacts
     paths:
       - "./binaries/**"
+      - "server-installer-$CI_COMMIT_SHORT_SHA.zip"
     expire_in: 1 week

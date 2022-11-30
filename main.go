@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cavaliergopher/grab"
+	"github.com/cavaliergopher/grab/v3"
 	"io"
 	"log"
 	"net/http"

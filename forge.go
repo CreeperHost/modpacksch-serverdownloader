@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cavaliergopher/grab"
+	"github.com/cavaliergopher/grab/v3"
 )
 
 func GetForge(modloader Target, mc Minecraft) (error, ModLoader) {

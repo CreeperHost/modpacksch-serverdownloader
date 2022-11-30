@@ -1,5 +1,5 @@
-module ServerDownloader
+module ftbserverdownloader
 
 go 1.19
 
-require github.com/cavaliergopher/grab v2.0.0+incompatible
+require github.com/cavaliergopher/grab/v3 v3.0.1
