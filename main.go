@@ -500,6 +500,7 @@ Loop:
 		}
 
 		os.Remove("overrides.zip")
+		os.RemoveAll("overrides")
 	}
 
 	log.Printf("Installed!")
