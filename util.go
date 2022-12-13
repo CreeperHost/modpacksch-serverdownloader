@@ -216,7 +216,7 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 			if err == nil {
 				URL, err := url.Parse(vanillaManifest.Downloads.Server.URL)
 				if err == nil {
-					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", "sha1", vanillaManifest.Downloads.Server.SHA1, path.Join("", "minecraft_server."+v.ID+".jar")}
+					ret = Download{"", *URL, "minecraft_server." + v.ID + ".jar", "sha1", vanillaManifest.Downloads.Server.SHA1, filepath.Join("", "minecraft_server."+v.ID+".jar")}
 				}
 			}
 		}
@@ -370,7 +370,7 @@ func listDirectories(directories []string) []string {
 	directoryReturn = make([]string, len(allFiles))
 
 	for i, file := range allFiles {
-		directoryReturn[i] = path.Join(file.directory, file.Name())
+		directoryReturn[i] = filepath.Join(file.directory, file.Name())
 	}
 
 	return directoryReturn
@@ -533,4 +533,22 @@ func extractTarGz(dest string, zipPath string) error {
 	}
 	file.Close()
 	return nil
+}
+
+func mcCleanup(installPath string) {
+	fmt.Println("Running clean up")
+	if !Options.Nojava {
+		if _, err := os.Stat(filepath.Join(installPath, "jre")); !os.IsNotExist(err) {
+			err = os.RemoveAll(filepath.Join(installPath, "jre"))
+			if err != nil {
+				fmt.Println("[ERROR] Unable to remove JRE folder\n", err)
+			}
+		}
+	}
+	if _, err := os.Stat(filepath.Join(installPath, "libraries")); !os.IsNotExist(err) {
+		err = os.RemoveAll(filepath.Join(installPath, "libraries"))
+		if err != nil {
+			fmt.Println("[ERROR] Unable to remove libraries folder\n", err)
+		}
+	}
 }

@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/url"
 	"os"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -109,9 +108,9 @@ func (self *AdoptiumJavaProvider) GetDownloads(installPath string) []Download {
 		return downloads
 	}
 
-	jrePath := path.Join(installPath, "jre")
+	jrePath := filepath.Join(installPath, "jre")
 	archiveName := "jre" + ext
-	fullPath := path.Join(jrePath, archiveName)
+	fullPath := filepath.Join(jrePath, archiveName)
 
 	version := InstallProperties{rel, &binary, &fullPath}
 	self.InstallProps = &version
@@ -125,7 +124,7 @@ func (self *AdoptiumJavaProvider) Install(installPath string) bool {
 	if self.InstallProps != nil {
 		archivePath := *self.InstallProps.ArchivePath
 		if strings.HasSuffix(archivePath, ".zip") {
-			err := extractZip(path.Join(installPath, "jre"), archivePath)
+			err := extractZip(filepath.Join(installPath, "jre"), archivePath)
 			if err != nil {
 				log.Println("Failed to extract zip: " + archivePath)
 				log.Println(err)
@@ -133,7 +132,7 @@ func (self *AdoptiumJavaProvider) Install(installPath string) bool {
 			}
 			os.Remove(archivePath)
 		} else if strings.HasSuffix(archivePath, ".tar.gz") {
-			err := extractTarGz(path.Join(installPath, "jre"), archivePath)
+			err := extractTarGz(filepath.Join(installPath, "jre"), archivePath)
 			if err != nil {
 				log.Println("Failed to extract tar.gz: " + archivePath)
 				log.Println(err)

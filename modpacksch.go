@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -164,7 +164,7 @@ func (v VersionInfo) GetDownloads() []Download {
 			//shrug
 			continue
 		}
-		downloads = append(downloads, Download{f.Path, *parse, f.Name, "sha1", f.SHA1, path.Join(f.Path, f.Name)})
+		downloads = append(downloads, Download{f.Path, *parse, f.Name, "sha1", f.SHA1, filepath.Join(f.Path, f.Name)})
 	}
 	return downloads
 }
@@ -199,7 +199,7 @@ func (v VersionInfo) WriteJson(installPath string) bool {
 
 	defer resp.Body.Close()
 
-	return os.WriteFile(path.Join(installPath, "version.json"), stringRet, 0644) == nil
+	return os.WriteFile(filepath.Join(installPath, "version.json"), stringRet, 0644) == nil
 }
 
 func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java JavaProvider) {
@@ -240,7 +240,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 			"IF /I \"%EULA%\" NEQ \"y\" GOTO END\r\n" +
 			"echo eula=true>eula.txt\r\n" +
 			":END\r\n" +
-			"start \"FTB Server\" \"" + java.GetJavaPath("") + "\" -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
+			"\"" + java.GetJavaPath("") + "\" -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
 		filename += ".bat"
 	} else {
 		script = "#!/bin/bash\n" +
@@ -255,7 +255,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 			"\"" + java.GetJavaPath("") + "\" -javaagent:log4jfix/Log4jPatcher-1.0.0.jar " + launch
 		filename += ".sh"
 	}
-	if err := os.WriteFile(path.Join(installPath, filename), []byte(script), 0755); err != nil {
+	if err := os.WriteFile(filepath.Join(installPath, filename), []byte(script), 0755); err != nil {
 		log.Println(fmt.Sprintf("Error occurred whilst creating launch script: %v", err))
 	}
 }
@@ -285,7 +285,7 @@ func (d Download) VerifyChecksum(installPath string) bool {
 		return true
 	}
 
-	filename := path.Join(installPath, d.Path, d.Name)
+	filename := filepath.Join(installPath, d.Path, d.Name)
 
 	f, err := os.Open(filename)
 	if err != nil {

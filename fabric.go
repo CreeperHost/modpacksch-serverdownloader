@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 )
@@ -87,7 +87,7 @@ func (f Fabric) GetDownloads(installPath string) []Download {
 			continue
 		}
 
-		downloads = append(downloads, Download{path.Join(homeDir, ".cache"), *parse, filename, "sha1", sha1, path.Join(homeDir, ".cache", filename)})
+		downloads = append(downloads, Download{filepath.Join(homeDir, ".cache"), *parse, filename, "sha1", sha1, filepath.Join(homeDir, ".cache", filename)})
 	}
 	return downloads
 }
@@ -117,9 +117,9 @@ func (f Fabric) Install(installPath string, java JavaProvider) bool {
 		// handleerr
 	}
 
-	os.WriteFile(path.Join(installPath, "fabric-server-launcher.properties"), []byte("serverJar="+serverDownload.Name+"\n"), 0644)
+	os.WriteFile(filepath.Join(installPath, "fabric-server-launcher.properties"), []byte("serverJar="+serverDownload.Name+"\n"), 0644)
 
-	mergeZips(jars, path.Join(installPath, serverName), false, meta.MainClass)
+	mergeZips(jars, filepath.Join(installPath, serverName), false, meta.MainClass)
 
 	return true
 }

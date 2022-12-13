@@ -1,4 +1,4 @@
-module ServerDownloader
+module ftbserverdownloader
 
 go 1.19
 
