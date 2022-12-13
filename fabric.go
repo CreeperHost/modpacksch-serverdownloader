@@ -83,8 +83,7 @@ func (f Fabric) GetDownloads(installPath string) []Download {
 	}
 
 	downloads := []Download{serverDownload}
-
-	if f.
+	
 	iFileName := fmt.Sprintf("fabric-server-mc.%s-loader.%s-launcher.%s.jar", f.Minecraft.RawVersion, f.RawVersion, f.InstallerCache[0].Version)
 	iURL, err := url.Parse(fmt.Sprintf("https://meta.fabricmc.net/v2/versions/loader/%s/%s/%s/server/jar", f.Minecraft.RawVersion, f.RawVersion, f.InstallerCache[0].Version))
 	if err != nil {
