@@ -15,7 +15,7 @@ builds/
 test/
 
 **/serverinstall_*
-test-curse/
+test-*/
 
 sky/
 
