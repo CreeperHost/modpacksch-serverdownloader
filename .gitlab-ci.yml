@@ -91,7 +91,6 @@ package:
   stage: package
   script:
     - echo "packaging everything here"
-    - zip -r server-installer-$CI_COMMIT_SHORT_SHA binaries/*
 #    - chmod +x upx.sh && ./upx.sh
   needs:
     - build_windows
@@ -106,5 +105,4 @@ package:
     name: all-artifacts
     paths:
       - "./binaries/**"
-      - "server-installer-$CI_COMMIT_SHORT_SHA.zip"
     expire_in: 1 week
