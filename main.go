@@ -457,9 +457,7 @@ Loop:
 
 	java.Install(installPath)
 
-	fmt.Println("Taking a break for a few seconds")
 	time.Sleep(time.Second * 2)
-	fmt.Println("Break done, lets go!!!")
 
 	ml.Install(installPath, java)
 
