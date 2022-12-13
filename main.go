@@ -447,7 +447,8 @@ Loop:
 		"Downloaded %d successful, %d failed, %d incomplete.\n",
 		succeeded,
 		failed,
-		inProgress)
+		inProgress,
+		)
 
 	if failed > 0 {
 		if !QuestionYN(true, "Some downloads failed. Would you like to continue anyway?") {
