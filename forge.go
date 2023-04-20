@@ -535,7 +535,9 @@ func (v VersionJsonFG3) GetDownloads() []Download {
 			actualUrlStr := ""
 		Out:
 			for _, mirror := range mirrors {
-				actualUrlStr = strings.Replace(artichoke.Url, "https://files.minecraftforge.net/maven/", mirror, 1)
+				//actualUrlStr = strings.Replace(artichoke.Url, "https://files.minecraftforge.net/maven/", mirror, 1)
+				//actualUrlStr = strings.Replace(artichoke.Url, "https://maven.minecraftforge.net/", mirror, 1)
+				actualUrlStr = GetMirrorFor(artichoke.Url, mirror)
 				if FileOnServer(actualUrlStr) {
 					break Out
 				}
