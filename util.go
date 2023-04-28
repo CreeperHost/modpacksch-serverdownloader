@@ -392,11 +392,19 @@ func getOrBlank(URL string) string {
 
 func GetMirrorFor(urlStr string, fallback string) string {
 	mirrors := GetMirrors()
+	parsedURL, err := url.Parse(urlStr)
+	if err != nil {
+		log.Println("Error parsing mirror url:", err)
+		return urlStr
+	}
+	//todo tidy this up to use the parsed url
 	baseUrlStr := strings.Replace(urlStr, "https://files.minecraftforge.net/maven/", "", 1)
 	baseUrlStr = strings.Replace(baseUrlStr, "https://apps.modpacks.ch/versions/", "", 1)
 	baseUrlStr = strings.Replace(baseUrlStr, "https://maven.minecraftforge.net/", "", 1)
 	baseUrlStr = strings.Replace(baseUrlStr, "https://maven.creeperhost.net/", "", 1)
-	fullUrl := fallback + baseUrlStr
+	fallbackUrl := fallback + strings.Replace(parsedURL.Path, "/", "", 1)
+	// end of tidy up
+	var fullUrl string
 	for _, mirror := range mirrors {
 		newStr := mirror + baseUrlStr
 		if FileOnServer(newStr) {
@@ -404,6 +412,14 @@ func GetMirrorFor(urlStr string, fallback string) string {
 			break
 		}
 	}
+	if fullUrl == "" {
+		if FileOnServer(fallbackUrl) {
+			fullUrl = fallbackUrl
+		} else {
+			fullUrl = urlStr
+		}
+	}
+
 	return fullUrl
 }
 
