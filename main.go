@@ -550,6 +550,8 @@ func (v VersionInfo) GetModLoader() (error, ModLoader) {
 
 	if modLoader.Name == "forge" {
 		return GetForge(modLoader, mc)
+	} else if modLoader.Name == "neoforged" {
+		return GetNeoForge(modLoader, mc)
 	} else if modLoader.Name == "fabric" {
 		return GetFabric(modLoader, mc)
 	}
