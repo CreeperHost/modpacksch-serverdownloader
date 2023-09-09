@@ -448,7 +448,7 @@ Loop:
 		succeeded,
 		failed,
 		inProgress,
-		)
+	)
 
 	if failed > 0 {
 		if !QuestionYN(true, "Some downloads failed. Would you like to continue anyway?") {
@@ -620,6 +620,7 @@ func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Resp
 		if !filepath.IsAbs(tmpPath) {
 			tmpPath = filepath.Join(dst, tmpPath)
 		}
+		grab.DefaultClient.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69"
 		req, err := grab.NewRequest(filepath.Join(tmpPath, download.Name), download.URL.String())
 		if err != nil {
 			return nil, err
