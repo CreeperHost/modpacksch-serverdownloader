@@ -2,11 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 )
 
 func (m Minecraft) GetDownloads(installPath string) []Download {
-	log.Println("Getting downloads for Vanilla")
+	printfln("Getting downloads for Vanilla")
 	vanillaVer, err := m.GetVanillaVersion()
 	if err != nil {
 		// handleerr

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -17,7 +16,7 @@ import (
 
 // const FABRIC_META_API = "https://meta.fabricmc.net/v2/versions/loader/%s/%s/server/json"
 const (
-	FABRIC_META       = "https://meta.fabricmc.net/"
+	FABRIC_META        = "https://meta.fabricmc.net/"
 	FABRIC_SERVER_JSON = "v2/versions/loader/%s/%s/server/json"
 )
 
@@ -50,21 +49,21 @@ type FabricMeta struct {
 func (f *Fabric) getMeta() FabricMeta {
 	if len(f.metaCache.Libraries) == 0 {
 		var meta = FabricMeta{}
-		var url = fmt.Sprintf(FABRIC_META + FABRIC_SERVER_JSON, f.Minecraft.RawVersion, f.RawVersion)
+		var url = fmt.Sprintf(FABRIC_META+FABRIC_SERVER_JSON, f.Minecraft.RawVersion, f.RawVersion)
 		resp, err := http.Get(url)
 		if err != nil {
-			log.Fatalf("Error getting fabric meta for Minecraft %s Fabric %s: %v", f.Minecraft.RawVersion, f.RawVersion, err)
+			fatalf("Error getting fabric meta for Minecraft %s Fabric %s: %v", f.Minecraft.RawVersion, f.RawVersion, err)
 		}
 
 		defer resp.Body.Close()
 		rawFabricBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Fatalf("Error getting fabric meta for Minecraft %s Fabric %s: %v", f.Minecraft.RawVersion, f.RawVersion, err)
+			fatalf("Error getting fabric meta for Minecraft %s Fabric %s: %v", f.Minecraft.RawVersion, f.RawVersion, err)
 		}
 
 		err = json.Unmarshal(rawFabricBytes, &meta)
 		if err != nil {
-			log.Fatalf("Error parsing fabric meta for Minecraft %s Fabric %s: %v", f.Minecraft.RawVersion, f.RawVersion, err)
+			fatalf("Error parsing fabric meta for Minecraft %s Fabric %s: %v", f.Minecraft.RawVersion, f.RawVersion, err)
 		}
 
 		f.metaCache = meta
@@ -74,7 +73,7 @@ func (f *Fabric) getMeta() FabricMeta {
 }
 
 func (f Fabric) GetDownloads(installPath string) []Download {
-	log.Println("Getting downloads for Fabric")
+	printfln("Getting downloads for Fabric")
 	vanillaVer, err := f.FabricVersion.Minecraft.GetVanillaVersion()
 	if err != nil {
 		// handleerr
@@ -90,20 +89,20 @@ func (f Fabric) GetDownloads(installPath string) []Download {
 	fVersion, _ := version.NewVersion(f.RawVersion)
 	autoVersion, _ := version.NewVersion("0.12.0")
 
-	if fVersion.GreaterThanOrEqual(autoVersion){
+	if fVersion.GreaterThanOrEqual(autoVersion) {
 		iFileName := fmt.Sprintf("fabric-%s-%s-server-launch.jar", f.Minecraft.RawVersion, f.RawVersion)
 		iURL, err := url.Parse(fmt.Sprintf("https://meta.fabricmc.net/v2/versions/loader/%s/%s/%s/server/jar", f.Minecraft.RawVersion, f.RawVersion, f.InstallerCache[0].Version))
 		if err != nil {
-			log.Fatalf("Error parsing fabric installer download URL\n%v", err)
+			fatalf("Error parsing fabric installer download URL\n%v", err)
 		}
-		log.Printf("Installer download URL %s", iURL.String())
+		printf("Installer download URL %s", iURL.String())
 		downloads = append(downloads, Download{
 			Path:     installPath,
 			URL:      *iURL,
 			Name:     iFileName,
 			FullPath: filepath.Join(installPath, iFileName),
 		})
-	}else{
+	} else {
 		meta := f.getMeta()
 		homeDir := getFabricHomeDir()
 		for _, library := range meta.Libraries {
@@ -121,13 +120,12 @@ func (f Fabric) GetDownloads(installPath string) []Download {
 			downloads = append(downloads, Download{filepath.Join(homeDir, ".cache"), *parse, filename, "sha1", sha1, filepath.Join(homeDir, ".cache", filename)})
 		}
 	}
-	
 
 	return downloads
 }
 
 func (f Fabric) Install(installPath string, java JavaProvider) bool {
-	log.Println("Installing Fabric")
+	printfln("Installing Fabric")
 	serverName := fmt.Sprintf("fabric-%s-%s-server-launch.jar", f.Minecraft.RawVersion, f.FabricVersion.RawVersion)
 	meta := f.getMeta()
 
@@ -153,7 +151,7 @@ func (f Fabric) Install(installPath string, java JavaProvider) bool {
 	fVersion, _ := version.NewVersion(f.RawVersion)
 	autoVersion, _ := version.NewVersion("0.12.0")
 
-	if !fVersion.GreaterThanOrEqual(autoVersion){
+	if !fVersion.GreaterThanOrEqual(autoVersion) {
 		os.WriteFile(filepath.Join(installPath, "fabric-server-launcher.properties"), []byte("serverJar="+serverDownload.Name+"\n"), 0644)
 		mergeZips(jars, filepath.Join(installPath, serverName), false, meta.MainClass)
 	}
@@ -177,14 +175,14 @@ func getInstaller() FabricMetaInstaller {
 	var url = FABRIC_META + "/v2/versions/installer"
 	resp, err := http.Get(url)
 	if err != nil {
-		log.Fatalf("error getting fabric meta for Minecraft %s Fabric", err)
+		fatalf("error getting fabric meta for Minecraft %s Fabric", err)
 	}
 
 	defer resp.Body.Close()
 	var fInstallers FabricMetaInstaller
 	err = json.NewDecoder(resp.Body).Decode(&fInstallers)
 	if err != nil {
-		log.Fatalf("error decoding response\n%v", err)
+		fatalf("error decoding response\n%v", err)
 	}
 
 	return fInstallers

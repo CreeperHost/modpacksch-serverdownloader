@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -91,7 +90,7 @@ type NeoForgeUniversal struct {
 }
 
 func (f NeoForgeUniversal) GetDownloads(installPath string) []Download {
-	log.Println("Getting downloads for NeoForged Universal")
+	printfln("Getting downloads for NeoForged Universal")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	versionStrOther := fmt.Sprintf(versionFmtOther, f.Version.Minecraft.RawVersion, f.Version.RawVersion, f.Version.Minecraft.RawVersion)
 	universalName := fmt.Sprintf("forge-%s-universal.jar", versionStr)
@@ -112,7 +111,7 @@ func (f NeoForgeUniversal) GetDownloads(installPath string) []Download {
 	if !FileOnServer(forgeUrlJSON) {
 		resp, err := grab.Get(installPath, forgeUrl)
 		if err != nil {
-			log.Fatalf("JSON not on server and unable to get neoforged jar: %v", err)
+			fatalf("JSON not on server and unable to get neoforged jar: %v", err)
 		}
 		if resp.IsComplete() {
 			resp.Wait()
@@ -134,7 +133,7 @@ func (f NeoForgeUniversal) GetDownloads(installPath string) []Download {
 
 	URL, err := url.Parse(forgeUrl)
 	if err != nil {
-		log.Fatalf("Unable to get neoforged jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
+		fatalf("Unable to get neoforged jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
 	downloads := []Download{{"", *URL, universalName, "", "", filepath.Join("", universalName)}}
 
@@ -144,10 +143,10 @@ func (f NeoForgeUniversal) GetDownloads(installPath string) []Download {
 		if err == nil {
 			downloads = append(downloads, versionForge.GetLibraryDownloads()...)
 		} else {
-			log.Fatalf("Cannot get a json to download the libraries which is required: %v", err)
+			fatalf("Cannot get a json to download the libraries which is required: %v", err)
 		}
 	} else {
-		log.Fatalf("Cannot get a json to download the libraries which is required.")
+		fatalf("Cannot get a json to download the libraries which is required.")
 	}
 	vanillaVer, err := f.Version.Minecraft.GetVanillaVersion()
 	if err == nil {
@@ -157,7 +156,7 @@ func (f NeoForgeUniversal) GetDownloads(installPath string) []Download {
 		}
 	}
 	if err != nil {
-		log.Printf("Unable to get Minecraft server jar - but neoforged will try again anyway. Error: %v", err)
+		printf("Unable to get Minecraft server jar - but neoforged will try again anyway. Error: %v", err)
 	}
 	return downloads
 }
@@ -195,7 +194,7 @@ type NeoForgeInstall struct {
 }
 
 func (f NeoForgeInstall) GetDownloads(installPath string) []Download {
-	log.Println("Getting downloads for Forge Install")
+	printfln("Getting downloads for Forge Install")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
 	forgeUrl := fmt.Sprintf(neoForgeUrlInstallJar, versionStr, installerName)
@@ -205,7 +204,7 @@ func (f NeoForgeInstall) GetDownloads(installPath string) []Download {
 	if !FileOnServer(forgeUrlJSON) {
 		resp, err := grab.Get(installPath, forgeUrl)
 		if err != nil {
-			log.Fatalf("JSON not on server and unable to get forge jar: %v", err)
+			fatalf("JSON not on server and unable to get forge jar: %v", err)
 		}
 		if resp.IsComplete() {
 			resp.Wait()
@@ -232,7 +231,7 @@ func (f NeoForgeInstall) GetDownloads(installPath string) []Download {
 
 	URL, err := url.Parse(forgeUrl)
 	if err != nil {
-		log.Fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
+		fatalf("Unable to get forge jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
 	downloads := []Download{{"", *URL, installerName, "", "", filepath.Join("", installerName+".jar")}}
 
@@ -258,13 +257,13 @@ func (f NeoForgeInstall) GetDownloads(installPath string) []Download {
 		}
 	}
 	if err != nil {
-		log.Printf("Unable to get Minecraft server jar - but forge will try again anyway. Error: %v", err)
+		printf("Unable to get Minecraft server jar - but forge will try again anyway. Error: %v", err)
 	}
 	return downloads
 }
 
 func (f NeoForgeInstall) Install(installPath string, java JavaProvider) bool {
-	log.Println("Running Forge installer")
+	printfln("Running Forge installer")
 	retryCount := 0
 Forge:
 	xmx := "2048M"
@@ -272,7 +271,7 @@ Forge:
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
 	javaPath := java.GetJavaPath("")
 	if retryCount >= 2 {
-		log.Println("Install failed twice or more times, trying system Java")
+		printfln("Install failed twice or more times, trying system Java")
 		javaPath = "java"
 	}
 	LogIfVerbose("Running %s -Xmx%s -jar %s --installServer", javaPath, xmx, installerName)
@@ -281,23 +280,23 @@ Forge:
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
-		log.Fatal(fmt.Sprintf("Running forge installer failed with %s. You may wish to install forge %s for Minecraft %s manually", err, f.Version.RawVersion, f.Version.Minecraft.RawVersion))
+		fatalf(fmt.Sprintf("Running forge installer failed with %s. You may wish to install forge %s for Minecraft %s manually", err, f.Version.RawVersion, f.Version.Minecraft.RawVersion))
 		return false
 	}
 	if err := cmd.Wait(); err != nil {
 		if exitErr, ok := err.(*exec.ExitError); ok {
 			if exitErr.ExitCode() != 0 {
-				log.Println(fmt.Sprintf("Forge installer failed with exit code %d, retrying...", exitErr.ExitCode()))
+				printfln(fmt.Sprintf("Forge installer failed with exit code %d, retrying...", exitErr.ExitCode()))
 				retryCount++
 				if retryCount < 3 {
 					goto Forge
 				} else {
-					log.Fatal("Forge failed to install multiple times exiting...")
+					fatalf("Forge failed to install multiple times exiting...")
 					os.Exit(1)
 				}
 			}
 		} else {
-			log.Fatalf("cmd.Wait: %v", err)
+			fatalf("cmd.Wait: %v", err)
 		}
 	}
 	_ = os.Remove(filepath.Join(installPath, installerName) + ".log")
@@ -345,7 +344,7 @@ type NeoForgeInJar struct {
 }
 
 func (f NeoForgeInJar) GetDownloads(installPath string) []Download {
-	log.Println("Getting downloads for Forge In Jar")
+	printfln("Getting downloads for Forge In Jar")
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	serverName := fmt.Sprintf("forge-%s-universal.zip", versionStr)
 	if f.Version.Minecraft.RawVersion == "1.2.5" {
@@ -356,7 +355,7 @@ func (f NeoForgeInJar) GetDownloads(installPath string) []Download {
 
 	URL, err := url.Parse(forgeUrl)
 	if err != nil {
-		log.Fatalf("Unable to get neoforged jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
+		fatalf("Unable to get neoforged jar as error parsing URL somehow: URL: %s, Error: %v", forgeUrl, err)
 	}
 
 	vanillaVer, err := f.Version.Minecraft.GetVanillaVersion()
@@ -393,7 +392,7 @@ func (f NeoForgeInJar) GetDownloads(installPath string) []Download {
 		URL, err := url.Parse(libUrl)
 		if err != nil {
 			if err != nil {
-				log.Fatalf("Couldn't download lib as error parsing URL somehow: URL: %s, Error: %v", libUrl, err)
+				fatalf("Couldn't download lib as error parsing URL somehow: URL: %s, Error: %v", libUrl, err)
 			}
 		}
 		baseName := lib.name

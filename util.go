@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -19,6 +18,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
+)
+
+var (
+	loggerOut = os.Stdout
 )
 
 const MinecraftMetaURL = "https://launchermeta.mojang.com/mc/game/version_manifest.json"
@@ -227,7 +231,7 @@ func (v VanillaVersion) GetServerDownload() (Download, error) {
 func mergeZips(zips []string, destzip string, deleteAfter bool, mainClass string) {
 	zipfile, err := os.Create(destzip)
 	if err != nil {
-		log.Printf("Error opening %s for writing - running server may not work properly: %v\n", destzip, err)
+		printf("Error opening %s for writing - running server may not work properly: %v\n", destzip, err)
 	}
 	buf := bufio.NewWriter(zipfile)
 	w := zip.NewWriter(buf)
@@ -241,7 +245,7 @@ func mergeZips(zips []string, destzip string, deleteAfter bool, mainClass string
 	for _, file := range zips {
 		r, err := zip.OpenReader(file)
 		if err != nil {
-			log.Printf("Error opening %s to merge into %s\n", file, destzip)
+			printf("Error opening %s to merge into %s\n", file, destzip)
 			continue
 		}
 
@@ -249,7 +253,7 @@ func mergeZips(zips []string, destzip string, deleteAfter bool, mainClass string
 			if strings.HasPrefix(f.Name, "META-INF/services/") && !strings.HasSuffix(f.Name, "/") {
 				rc, err := f.Open()
 				if err != nil {
-					log.Printf("Error reading %s from %s to add services definition:%v\n", f.Name, file, err)
+					printf("Error reading %s from %s to add services definition:%v\n", f.Name, file, err)
 					continue
 				}
 
@@ -282,7 +286,7 @@ func mergeZips(zips []string, destzip string, deleteAfter bool, mainClass string
 				storedFiles[f.Name] = true
 				rc, err := f.Open()
 				if err != nil {
-					log.Printf("Error writing %s from %s to %s:%v\n", f.Name, file, destzip, err)
+					printf("Error writing %s from %s to %s:%v\n", f.Name, file, destzip, err)
 					continue
 				}
 				wc, _ := w.Create(f.Name)
@@ -292,7 +296,7 @@ func mergeZips(zips []string, destzip string, deleteAfter bool, mainClass string
 				rc.Close()
 
 				if err != nil {
-					log.Printf("Error writing %s from %s to %s:%v\n", f.Name, file, destzip, err)
+					printf("Error writing %s from %s to %s:%v\n", f.Name, file, destzip, err)
 				}
 			}
 		}
@@ -394,7 +398,7 @@ func GetMirrorFor(urlStr string, fallback string) string {
 	mirrors := GetMirrors()
 	parsedURL, err := url.Parse(urlStr)
 	if err != nil {
-		log.Println("Error parsing mirror url:", err)
+		printfln("Error parsing mirror url:", err)
 		return urlStr
 	}
 	//todo tidy this up to use the parsed url
@@ -452,7 +456,7 @@ func getKey() string {
 						}
 						foundStr = string(byteRead[lastIndex+1:])
 						foundStr = strings.TrimSpace(foundStr)
-						log.Println("Found private key, using instead of public")
+						printfln("Found private key, using instead of public")
 					}
 				}
 			}
@@ -480,7 +484,7 @@ func extractZip(dest string, zipPath string) error {
 			continue
 		}
 
-		log.Printf("Extracting %s -> %s", f.Name, destPath)
+		printf("Extracting %s -> %s", f.Name, destPath)
 
 		if err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm); err != nil {
 			return err
@@ -532,7 +536,7 @@ func extractTarGz(dest string, zipPath string) error {
 				return err
 			}
 		case tar.TypeReg:
-			log.Printf("Extracting %s -> %s", header.Name, destPath)
+			printf("Extracting %s -> %s", header.Name, destPath)
 			dstFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, header.FileInfo().Mode())
 			if err != nil {
 				return err
@@ -544,7 +548,7 @@ func extractTarGz(dest string, zipPath string) error {
 		case tar.TypeSymlink:
 			// Ignored.
 		default:
-			log.Printf("Unhandled type: %d %s", header.Typeflag, header.Name)
+			printf("Unhandled type: %d %s", header.Typeflag, header.Name)
 		}
 	}
 	file.Close()
@@ -566,5 +570,35 @@ func mcCleanup(installPath string) {
 		if err != nil {
 			fmt.Println("[ERROR] Unable to remove libraries folder\n", err)
 		}
+	}
+}
+
+func printfln(format string, a ...any) {
+	fmt.Fprintln(loggerOut, time.Now().Format("2006/01/02 15:04:05"), "", fmt.Sprintf(format, a...))
+}
+func printf(format string, a ...any) {
+	fmt.Fprint(loggerOut, time.Now().Format("2006/01/02 15:04:05"), " ", fmt.Sprintf(format, a...))
+}
+
+func println(a ...any) {
+	fmt.Print()
+	fmt.Println()
+	fmt.Fprintln(loggerOut, time.Now().Format("2006/01/02 15:04:05"), "", fmt.Sprint(a...))
+}
+func print(a ...any) {
+	fmt.Fprint(loggerOut, time.Now().Format("2006/01/02 15:04:05"), " ", fmt.Sprint(a...))
+}
+
+func fatal(a ...any) {
+	print(a...)
+	os.Exit(1)
+}
+func fatalf(format string, a ...any) {
+	printf(format, a...)
+	os.Exit(1)
+}
+func LogIfVerbose(str string, a ...any) {
+	if Options.Verbose {
+		fmt.Fprint(loggerOut, time.Now().Format("2006/01/02 15:04:05"), "", str, fmt.Sprintln(a...))
 	}
 }
