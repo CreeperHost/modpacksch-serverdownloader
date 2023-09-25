@@ -332,7 +332,7 @@ func (f NeoForgeInstall) GetLaunchJar(installPath string) (string, []string) {
 
 		var jvmArgs []string
 		jvmArgs = append(jvmArgs, "@user_jvm_args.txt")
-		jvmArgs = append(jvmArgs, "@"+filepath.Join("libraries", "net", "minecraftforge", "forge", mcVer+"-"+forgeVer, argsTxt))
+		jvmArgs = append(jvmArgs, "@"+filepath.Join("libraries", "net", "neoforged", "forge", mcVer+"-"+forgeVer, argsTxt))
 
 		return "", jvmArgs
 	}
