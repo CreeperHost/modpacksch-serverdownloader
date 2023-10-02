@@ -563,6 +563,8 @@ func mcCleanup(installPath string) {
 			if err != nil {
 				fmt.Println("[ERROR] Unable to remove JRE folder\n", err)
 			}
+		} else {
+			fmt.Println("Jre folder does not exist, no need to clean up")
 		}
 	}
 	if _, err := os.Stat(filepath.Join(installPath, "libraries")); !os.IsNotExist(err) {
