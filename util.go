@@ -536,7 +536,7 @@ func extractTarGz(dest string, zipPath string) error {
 				return err
 			}
 		case tar.TypeReg:
-			printf("Extracting %s -> %s", header.Name, destPath)
+			printfln("Extracting %s -> %s", header.Name, destPath)
 			dstFile, err := os.OpenFile(destPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, header.FileInfo().Mode())
 			if err != nil {
 				return err
