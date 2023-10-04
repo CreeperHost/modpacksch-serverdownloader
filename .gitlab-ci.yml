@@ -10,6 +10,8 @@ stages:
   - package
 
 .build:
+  tags:
+    - linux-aarch64
   stage: build
   variables:
     CGO_ENABLED: 0
