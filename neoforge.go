@@ -270,7 +270,7 @@ Forge:
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
 
-	var javaPath string
+	javaPath := ""
 	if retryCount >= 2 {
 		printfln("Install failed twice or more times, trying system Java")
 		javaPath = "java"
