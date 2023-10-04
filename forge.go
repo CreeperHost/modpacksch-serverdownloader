@@ -273,11 +273,15 @@ Forge:
 	xmx := "2048M"
 	versionStr := fmt.Sprintf(versionFmt, f.Version.Minecraft.RawVersion, f.Version.RawVersion)
 	installerName := fmt.Sprintf("forge-%s-installer.jar", versionStr)
-	javaPath := java.GetJavaPath("")
+
+	var javaPath string
 	if retryCount >= 2 {
 		printfln("Install failed twice or more times, trying system Java")
 		javaPath = "java"
+	} else {
+		javaPath = java.GetJavaPath("")
 	}
+	fmt.Println("Java Path has been set to:", javaPath)
 	LogIfVerbose("Running %s -Xmx%s -jar %s --installServer", javaPath, xmx, installerName)
 	cmd := exec.Command(javaPath, "-Xmx"+xmx, "-jar", installerName, "--installServer")
 	cmd.Dir = installPath

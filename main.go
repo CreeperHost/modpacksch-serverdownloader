@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/user"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -155,6 +156,10 @@ func main() {
 	}
 
 	fmt.Println(fmt.Sprintf("Server installer version %s commit %s", verStr, commitStr))
+	currentUser, err := user.Current()
+	if err == nil {
+		fmt.Println(fmt.Sprintf("Running installer as user %s (%s)", currentUser.Username, currentUser.Uid))
+	}
 	HandleLaunch(filename, packIdFound, versionFound)
 }
 
