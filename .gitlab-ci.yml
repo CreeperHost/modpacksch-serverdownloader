@@ -91,6 +91,8 @@ build_darwin_arm64:
 
 package:
   stage: package
+  tags:
+    - linux-aarch64
   script:
     - echo "packaging everything here"
 #    - chmod +x upx.sh && ./upx.sh
