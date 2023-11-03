@@ -83,7 +83,7 @@ func (f *NeoForgeVersion) Parse() error {
 		return nil
 	}
 
-	return errors.New(fmt.Sprintf("neoforge Version does not match expected format: %s", f.RawVersion))
+	return errors.New(fmt.Sprintf("NeoForge version does not match expected format: %s", f.RawVersion))
 }
 
 const neoForgeUrlInstallJar = "https://maven.neoforged.net/releases/net/neoforged/%s/%s/%s"
@@ -210,7 +210,7 @@ Forge:
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	if err := cmd.Start(); err != nil {
-		fatalf(fmt.Sprintf("Running neoforge installer failed with %s. You may wish to install neoforge %s for Minecraft %s manually", err, f.Version.RawVersion, f.Version.Minecraft.RawVersion))
+		fatalf(fmt.Sprintf("Running NeoForge installer failed with %s. You may wish to install NeoForge %s for Minecraft %s manually", err, f.Version.RawVersion, f.Version.Minecraft.RawVersion))
 		return false
 	}
 	if err := cmd.Wait(); err != nil {
