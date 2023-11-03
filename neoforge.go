@@ -39,12 +39,18 @@ type NeoForgeVersion struct {
 	Major         int
 	Minor         int
 	Build         int
+	Beta          bool
 	Minecraft     Minecraft
 	AfterBreaking bool
 }
 
 func (f *NeoForgeVersion) Parse() error {
-	splitVer := strings.Split(f.RawVersion, ".")
+	splitBeta := strings.Split(f.RawVersion, "-")
+	if len(splitBeta) >= 1 {
+		f.Beta = true
+	}
+
+	splitVer := strings.Split(splitBeta[0], ".")
 
 	if len(splitVer) >= 3 {
 		val, err := strconv.Atoi(splitVer[0])
