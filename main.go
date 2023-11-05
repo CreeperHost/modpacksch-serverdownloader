@@ -651,7 +651,7 @@ func updateUI(responses []*grab.Response) {
 		if resp != nil && resp.IsComplete() {
 			if resp.Err() != nil {
 				failed++
-				fmt.Fprintf(os.Stderr, "Error downloading %s: %v\n",
+				printf("Error downloading %s: %v\n",
 					resp.Request.URL(),
 					resp.Err())
 			} else {
