@@ -472,11 +472,11 @@ Loop:
 		versionInfo.WriteStartScript(installPath, ml, java)
 	}
 	if Options.Curseforge {
-		err = extractZip("", "overrides.zip")
+		err = extractZip(installPath, filepath.Join(installPath, "overrides.zip"))
 		if err != nil {
 			fatalf("Error extracting overrides.zip\n", err)
 		}
-		err := filepath.Walk("overrides", func(path string, info os.FileInfo, err error) error {
+		err := filepath.Walk(filepath.Join(installPath, "overrides"), func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -502,8 +502,8 @@ Loop:
 			fatalf("Overrides filepath.Walk error: %s", err.Error())
 		}
 
-		os.Remove("overrides.zip")
-		os.RemoveAll("overrides")
+		os.Remove(filepath.Join(installPath, "overrides.zip"))
+		os.RemoveAll(filepath.Join(installPath, "overrides"))
 	}
 
 	printfln("Installed!")

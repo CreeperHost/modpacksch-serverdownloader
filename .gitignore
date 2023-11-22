@@ -15,6 +15,7 @@ builds/
 test/
 
 **/serverinstall_*
+**/install_*
 test-*/
 
 sky/
