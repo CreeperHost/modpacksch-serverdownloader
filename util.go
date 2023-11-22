@@ -484,7 +484,7 @@ func extractZip(dest string, zipPath string) error {
 			continue
 		}
 
-		printf("Extracting %s -> %s", f.Name, destPath)
+		printfln("Extracting %s -> %s", f.Name, destPath)
 
 		if err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm); err != nil {
 			return err

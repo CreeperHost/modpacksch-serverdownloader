@@ -499,14 +499,14 @@ Loop:
 			return nil
 		})
 		if err != nil {
-			fatal(err)
+			fatalf("Overrides filepath.Walk error: %s", err.Error())
 		}
 
 		os.Remove("overrides.zip")
 		os.RemoveAll("overrides")
 	}
 
-	printf("Installed!")
+	printfln("Installed!")
 
 	// return the number of failed downloads as exit code
 	os.Exit(0)
