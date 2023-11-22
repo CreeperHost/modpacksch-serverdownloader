@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"github.com/cavaliergopher/grab/v3"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
+	"os/user"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -156,6 +156,10 @@ func main() {
 	}
 
 	fmt.Println(fmt.Sprintf("Server installer version %s commit %s", verStr, commitStr))
+	currentUser, err := user.Current()
+	if err == nil {
+		fmt.Println(fmt.Sprintf("Running installer as user %s (%s)", currentUser.Username, currentUser.Uid))
+	}
 	HandleLaunch(filename, packIdFound, versionFound)
 }
 
@@ -201,7 +205,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 	err, modpackId, versionId := ParseFilename(file)
 	if err != nil {
 		if found == -1 {
-			log.Printf("Cannot locate modpack via filename. Error: %v\n", err)
+			printf("Cannot locate modpack via filename. Error: %v\n", err)
 			PrintUsage(file)
 			os.Exit(9001)
 		}
@@ -228,11 +232,11 @@ func HandleLaunch(file string, found int, versionFound int) {
 	if _, err := os.Stat(installPath); os.IsNotExist(err) {
 		LogIfVerbose("Making folder %s\n", installPath)
 		if err := os.MkdirAll(installPath, os.FileMode(0755)); err != nil {
-			log.Fatalf("An error occured whilst creating the folder %s: %v", installPath, err)
+			fatalf("An error occured whilst creating the folder %s: %v", installPath, err)
 		}
 	} else {
 		if !QuestionYN(true, "Path %s already exists - still want to install?", installPath) {
-			log.Fatalf("Aborted by user")
+			fatalf("Aborted by user")
 		}
 
 	}
@@ -243,12 +247,12 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 	err, modpack := GetModpack(modpackId)
 	if err != nil {
-		log.Fatalf("Error fetching modpack: %v", err)
+		fatalf("Error fetching modpack: %v", err)
 	}
 
 	err, versionInfo := modpack.GetVersion(versionId)
 	if err != nil {
-		log.Fatalf("Error fetching modpack: %v", err)
+		fatalf("Error fetching modpack: %v", err)
 	}
 
 	downloads = versionInfo.GetDownloads()
@@ -260,14 +264,14 @@ func HandleLaunch(file string, found int, versionFound int) {
 	}
 
 	if !QuestionYN(true, "Continuing will install %s version %s%s. Do you wish to continue?", modpack.Name, versionInfo.Name, upgradeStr) {
-		log.Fatalf("Aborted by user")
+		fatalf("Aborted by user")
 	}
 
 	if upgrade {
 		err, info := GetVersionInfoFromFile(filepath.Join(installPath, "version.json"))
 		if err != nil {
 			if !QuestionYN(true, "An error occurred whilst trying to read the previous installation at %s: %v\nWould you like to continue anyway? You should probably delete folders with mods and configs in it, first!", installPath, err) {
-				log.Fatalf("Aborting due to corrupted previous installation")
+				fatalf("Aborting due to corrupted previous installation")
 			} else {
 				// TODO: handle removing folders here
 			}
@@ -275,7 +279,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 		if info.ParentId != modpack.ID {
 			if !QuestionYN(true, "Previous modpack is different to this modpack\nWould you like to continue anyway? You should probably delete folders with mods and configs in it, first!") {
-				log.Fatalf("Aborting due to different modpack already installed")
+				fatalf("Aborting due to different modpack already installed")
 			}
 		}
 
@@ -330,7 +334,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 			}
 		}
 
-		log.Printf("This install has %v files changed, %v new files and %v deleted files\n", len(changedFilesOld), len(newFiles), len(oldDeletedFiles))
+		printfln("This install has %v files changed, %v new files and %v deleted files", len(changedFilesOld), len(newFiles), len(oldDeletedFiles))
 
 		var failedChecksums []Download
 
@@ -360,12 +364,12 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 		downloads = append(changedFilesNew, newFiles...)
 
-		log.Println("Deleting removed files...")
+		printfln("Deleting removed files...")
 		for _, down := range oldDeletedFiles {
 			filePath := filepath.Join(installPath, down.FullPath)
 			LogIfVerbose("Removing %s\n", filePath)
 			if os.Remove(filePath) != nil {
-				log.Println("Error occurred whilst removing file " + filePath)
+				printfln("Error occurred whilst removing file " + filePath)
 				continue
 			}
 			tempPath := filepath.Join(installPath, down.Path)
@@ -384,20 +388,20 @@ func HandleLaunch(file string, found int, versionFound int) {
 			if empty {
 				LogIfVerbose("Removing %s as is empty\n", tempPath)
 				if os.RemoveAll(tempPath) != nil {
-					log.Println("Error occurred whilst removing folder " + tempPath)
+					printfln("Error occurred whilst removing folder " + tempPath)
 				}
 			}
 		}
 
-		log.Println("Performing update...")
+		printfln("Performing update...")
 	} else {
-		log.Println("Performing installation...")
+		printfln("Performing installation...")
 	}
 
 	err, ml := versionInfo.GetModLoader()
 
 	if err != nil {
-		log.Fatalf("Error getting Modloader: %v", err)
+		fatalf("Error getting Modloader: %v", err)
 	}
 
 	modLoaderDls := ml.GetDownloads(installPath)
@@ -418,7 +422,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 	grabs, err := GetBatch(Options.Threads, installPath, downloads...)
 	if err != nil {
-		log.Fatal(err)
+		fatal(err)
 	}
 	responses := make([]*grab.Response, 0, len(downloads))
 	t := time.NewTicker(200 * time.Millisecond)
@@ -443,12 +447,12 @@ Loop:
 		}
 	}
 
-	log.Printf(
+	printf(
 		"Downloaded %d successful, %d failed, %d incomplete.\n",
 		succeeded,
 		failed,
 		inProgress,
-		)
+	)
 
 	if failed > 0 {
 		if !QuestionYN(true, "Some downloads failed. Would you like to continue anyway?") {
@@ -468,11 +472,11 @@ Loop:
 		versionInfo.WriteStartScript(installPath, ml, java)
 	}
 	if Options.Curseforge {
-		err = extractZip("", "overrides.zip")
+		err = extractZip(installPath, filepath.Join(installPath, "overrides.zip"))
 		if err != nil {
-			log.Fatal("Error extracting overrides.zip\n", err)
+			fatalf("Error extracting overrides.zip\n", err)
 		}
-		err := filepath.Walk("overrides", func(path string, info os.FileInfo, err error) error {
+		err := filepath.Walk(filepath.Join(installPath, "overrides"), func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
@@ -481,7 +485,7 @@ Loop:
 				if _, err = os.Stat(strippedPath); errors.Is(err, os.ErrNotExist) {
 					err = os.Mkdir(strippedPath, os.ModePerm)
 					if err != nil {
-						log.Fatal("Error creating directory\n", err)
+						fatalf("Error creating directory\n", err)
 						return err
 					}
 				}
@@ -489,20 +493,20 @@ Loop:
 			}
 			err = os.Rename(path, strippedPath)
 			if err != nil {
-				log.Fatal("Error moving file from overrides\n", err)
+				fatalf("Error moving file from overrides\n", err)
 				return err
 			}
 			return nil
 		})
 		if err != nil {
-			log.Fatal(err)
+			fatalf("Overrides filepath.Walk error: %s", err.Error())
 		}
 
-		os.Remove("overrides.zip")
-		os.RemoveAll("overrides")
+		os.Remove(filepath.Join(installPath, "overrides.zip"))
+		os.RemoveAll(filepath.Join(installPath, "overrides"))
 	}
 
-	log.Printf("Installed!")
+	printfln("Installed!")
 
 	// return the number of failed downloads as exit code
 	os.Exit(0)
@@ -541,7 +545,7 @@ func (v VersionInfo) GetModLoader() (error, ModLoader) {
 	mc := Minecraft{}
 	mc.RawVersion = minecraftTar.Version
 	if err := mc.Parse(); err != nil {
-		log.Fatalf("Error parsing Version: %v", err)
+		fatalf("Error parsing Version: %v", err)
 	}
 
 	if len(modLoader.Name) == 0 {
@@ -550,6 +554,8 @@ func (v VersionInfo) GetModLoader() (error, ModLoader) {
 
 	if modLoader.Name == "forge" {
 		return GetForge(modLoader, mc)
+	} else if modLoader.Name == "neoforge" {
+		return GetNeoForge(modLoader, mc)
 	} else if modLoader.Name == "fabric" {
 		return GetFabric(modLoader, mc)
 	}
@@ -596,12 +602,6 @@ func APICall(url string, val interface{}) error {
 	return nil
 }
 
-func LogIfVerbose(fmt string, v ...interface{}) {
-	if Options.Verbose {
-		log.Printf(fmt, v...)
-	}
-}
-
 func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Response, error) {
 	fi, err := os.Stat(dst)
 	if err != nil {
@@ -618,6 +618,7 @@ func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Resp
 		if !filepath.IsAbs(tmpPath) {
 			tmpPath = filepath.Join(dst, tmpPath)
 		}
+		grab.DefaultClient.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69"
 		req, err := grab.NewRequest(filepath.Join(tmpPath, download.Name), download.URL.String())
 		if err != nil {
 			return nil, err
@@ -650,12 +651,12 @@ func updateUI(responses []*grab.Response) {
 		if resp != nil && resp.IsComplete() {
 			if resp.Err() != nil {
 				failed++
-				fmt.Fprintf(os.Stderr, "Error downloading %s: %v\n",
+				printf("Error downloading %s: %v\n",
 					resp.Request.URL(),
 					resp.Err())
 			} else {
 				succeeded++
-				log.Printf("[%d/%d] Downloaded %s from %s\n", succeeded, len(downloads), resp.Filename, resp.Request.URL())
+				printf("[%d/%d] Downloaded %s from %s\n", succeeded, len(downloads), resp.Filename, resp.Request.URL())
 			}
 			responses[i] = nil
 		}

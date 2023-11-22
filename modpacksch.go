@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"hash"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -256,7 +255,7 @@ func (v VersionInfo) WriteStartScript(installPath string, loader ModLoader, java
 		filename += ".sh"
 	}
 	if err := os.WriteFile(filepath.Join(installPath, filename), []byte(script), 0755); err != nil {
-		log.Println(fmt.Sprintf("Error occurred whilst creating launch script: %v", err))
+		printfln(fmt.Sprintf("Error occurred whilst creating launch script: %v", err))
 	}
 }
 

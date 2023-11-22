@@ -15,8 +15,11 @@ builds/
 test/
 
 **/serverinstall_*
+**/install_*
 test-*/
 
 sky/
 
 test-path/
+
+testNeo/

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -126,21 +125,21 @@ func (self *AdoptiumJavaProvider) Install(installPath string) bool {
 		if strings.HasSuffix(archivePath, ".zip") {
 			err := extractZip(filepath.Join(installPath, "jre"), archivePath)
 			if err != nil {
-				log.Println("Failed to extract zip: " + archivePath)
-				log.Println(err)
+				printfln("Failed to extract zip: " + archivePath)
+				println(err)
 				return false
 			}
 			os.Remove(archivePath)
 		} else if strings.HasSuffix(archivePath, ".tar.gz") {
 			err := extractTarGz(filepath.Join(installPath, "jre"), archivePath)
 			if err != nil {
-				log.Println("Failed to extract tar.gz: " + archivePath)
-				log.Println(err)
+				printfln("Failed to extract tar.gz: " + archivePath)
+				println(err)
 				return false
 			}
 			os.Remove(archivePath)
 		} else {
-			log.Println("I don't know how to extract this adoptium archive: " + archivePath)
+			printfln("I don't know how to extract this adoptium archive: " + archivePath)
 			return false
 		}
 	}

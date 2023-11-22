@@ -10,6 +10,8 @@ stages:
   - package
 
 .build:
+  tags:
+    - linux-aarch64
   stage: build
   variables:
     CGO_ENABLED: 0
@@ -70,6 +72,14 @@ build_linux_arm64:
     GOARCH: "arm64"
     FILE_OUTPUT: "linux-arm"
 
+build_linux_riscv64:
+  stage: build
+  extends: .build
+  variables:
+    GOOS: "linux"
+    GOARCH: "riscv64"
+    FILE_OUTPUT: "linux-riscv64"
+
 build_freebsd_arm64:
   stage: build
   extends: .build
@@ -89,6 +99,8 @@ build_darwin_arm64:
 
 package:
   stage: package
+  tags:
+    - linux-aarch64
   script:
     - echo "packaging everything here"
 #    - chmod +x upx.sh && ./upx.sh
