@@ -13,8 +13,8 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 
-	"github.com/cavaliergopher/grab/v3"
 	hashVer "github.com/hashicorp/go-version"
 )
 
@@ -120,13 +120,13 @@ func (f NeoForgeInstall) GetDownloads(installPath string) []Download {
 	var rawForgeJSON []byte
 	var rawForgeInstallJSON []byte
 	if !FileOnServer(forgeUrlJSON) {
-		resp, err := grab.Get(installPath, forgeUrl)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		_, err := downloadFile(forgeUrl, installPath, installerName, "", &wg)
 		if err != nil {
 			fatalf("JSON not on server and unable to get forge jar:\n%s\n%s\n %v", forgeUrlJSON, forgeUrl, err)
 		}
-		if resp.IsComplete() {
-			resp.Wait()
-		}
+		wg.Wait()
 		bytes, err := UnzipFileToMemory(filepath.Join(installPath, installerName), "version.json")
 		if err == nil {
 			rawForgeJSON = bytes

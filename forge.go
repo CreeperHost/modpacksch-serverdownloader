@@ -14,8 +14,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-
-	"github.com/cavaliergopher/grab/v3"
+	"sync"
 )
 
 func GetForge(modloader Target, mc Minecraft) (error, ModLoader) {
@@ -110,13 +109,13 @@ func (f ForgeUniversal) GetDownloads(installPath string) []Download {
 		universalName = universalNameOther
 	}
 	if !FileOnServer(forgeUrlJSON) {
-		resp, err := grab.Get(installPath, forgeUrl)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		_, err := downloadFile(forgeUrl, installPath, universalName, "", &wg)
 		if err != nil {
 			fatalf("JSON not on server and unable to get forge jar: %v", err)
 		}
-		if resp.IsComplete() {
-			resp.Wait()
-		}
+		wg.Wait()
 		bytes, err := UnzipFileToMemory(filepath.Join(installPath, universalName), "version.json")
 		if err == nil {
 			rawForgeJSON = bytes
@@ -206,13 +205,13 @@ func (f ForgeInstall) GetDownloads(installPath string) []Download {
 	var rawForgeJSON []byte
 	var rawForgeInstallJSON []byte
 	if !FileOnServer(forgeUrlJSON) {
-		resp, err := grab.Get(installPath, forgeUrl)
+		var wg sync.WaitGroup
+		wg.Add(1)
+		_, err := downloadFile(forgeUrl, installPath, installerName, "", &wg)
 		if err != nil {
 			fatalf("JSON not on server and unable to get forge jar: %v", err)
 		}
-		if resp.IsComplete() {
-			resp.Wait()
-		}
+		wg.Wait()
 		bytes, err := UnzipFileToMemory(filepath.Join(installPath, installerName), "version.json")
 		if err == nil {
 			rawForgeJSON = bytes

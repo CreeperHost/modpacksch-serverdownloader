@@ -1,12 +1,10 @@
 package main
 
 import (
-	"crypto"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cavaliergopher/grab/v3"
+	"github.com/hashicorp/go-getter"
 	"io"
 	"net/http"
 	"net/url"
@@ -19,6 +17,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -420,31 +419,9 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 	downloads = append(downloads, java.GetDownloads(installPath)...)
 
-	grabs, err := GetBatch(Options.Threads, installPath, downloads...)
+	err = DoDownloads(Options.Threads, installPath, downloads...)
 	if err != nil {
 		fatal(err)
-	}
-	responses := make([]*grab.Response, 0, len(downloads))
-	t := time.NewTicker(200 * time.Millisecond)
-	defer t.Stop()
-
-Loop:
-	for {
-		select {
-		case resp := <-grabs:
-			if resp != nil {
-				// a new response has been received and has started downloading
-				responses = append(responses, resp)
-			} else {
-				// channel is closed - all downloads are complete
-				updateUI(responses)
-				break Loop
-			}
-
-		case <-t.C:
-			// update UI every 200ms
-			updateUI(responses)
-		}
 	}
 
 	printf(
@@ -602,63 +579,67 @@ func APICall(url string, val interface{}) error {
 	return nil
 }
 
-func GetBatch(workers int, dst string, downloads ...Download) (<-chan *grab.Response, error) {
+func DoDownloads(workers int, dst string, downloads ...Download) error {
+	var wg sync.WaitGroup
+
 	fi, err := os.Stat(dst)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if !fi.IsDir() {
-		return nil, fmt.Errorf("destination is not a directory")
+		return fmt.Errorf("destination is not a directory")
 	}
 
-	reqs := make([]*grab.Request, len(downloads))
-	for i := 0; i < len(downloads); i++ {
-		download := downloads[i]
-		tmpPath := download.Path
+	waitChan := make(chan struct{}, workers)
+	count := 0
+	for _, download := range downloads {
+		wg.Add(1)
+		dl := download
+		tmpPath := dl.Path
 		if !filepath.IsAbs(tmpPath) {
 			tmpPath = filepath.Join(dst, tmpPath)
 		}
-		grab.DefaultClient.UserAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69"
-		req, err := grab.NewRequest(filepath.Join(tmpPath, download.Name), download.URL.String())
-		if err != nil {
-			return nil, err
+		checksum := ""
+		if dl.HashType != "" && dl.Hash != "" {
+			checksum = fmt.Sprintf("&checksum=%s:%s", dl.HashType, dl.Hash)
 		}
-		req.NoResume = true // force re-download
-		// TODO, Download should have a function to get the 'validation properties'
-		//  this could unify some hash handling.
-		if len(download.HashType) != 0 && len(download.Hash) != 0 {
-			byteHex, _ := hex.DecodeString(download.Hash)
-			hashType := crypto.SHA1 // Ideally i want null default.
-			switch download.HashType {
-			case "sha1":
-				hashType = crypto.SHA1
-			case "sha256":
-				hashType = crypto.SHA256
+
+		waitChan <- struct{}{}
+		count++
+		go func(count int) {
+			s, dlErr := downloadFile(dl.URL.String(), tmpPath, dl.Name, checksum, &wg)
+			if dlErr != nil {
+				println(dlErr)
+			} else {
+				println(s)
 			}
-			req.SetChecksum(hashType.New(), byteHex, false)
-		}
-
-		reqs[i] = req
+			<-waitChan
+		}(count)
 	}
-
-	ch := grab.DefaultClient.DoBatch(workers, reqs...)
-	return ch, nil
+	wg.Wait()
+	return nil
 }
 
-func updateUI(responses []*grab.Response) {
-	// print newly completed downloads
-	for i, resp := range responses {
-		if resp != nil && resp.IsComplete() {
-			if resp.Err() != nil {
-				failed++
-				printf("Error downloading %s: %v\n",
-					resp.Request.URL(),
-					resp.Err())
-			} else {
-				succeeded++
-				printf("[%d/%d] Downloaded %s from %s\n", succeeded, len(downloads), resp.Filename, resp.Request.URL())
-			}
-			responses[i] = nil
-		}
+func downloadFile(url string, dest string, fileName string, checksum string, wg *sync.WaitGroup) (string, error) {
+	defer wg.Done()
+	destPath := filepath.Join(dest, fileName)
+
+	// Initialize the getter client
+	client := &getter.Client{
+		Src:  fmt.Sprintf("%s?archive=false%s", url, checksum),
+		Dst:  destPath,
+		Mode: getter.ClientModeFile,
+	}
+
+	// Perform the download
+	if err := client.Get(); err != nil {
+		failed++
+		os.Remove(destPath)
+		logStr := fmt.Sprintf("[%d/%d] Error downloading %s: %v", succeeded+failed, len(downloads), url, err)
+		return "", errors.New(logStr)
+	} else {
+		succeeded++
+		logStr := fmt.Sprintf("[%d/%d] Downloaded %s from %s", succeeded+failed, len(downloads), fileName, url)
+		return logStr, nil
 	}
 }
