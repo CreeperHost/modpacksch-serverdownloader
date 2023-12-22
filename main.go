@@ -32,10 +32,12 @@ var (
 	verStr    = "dev"
 	commitStr = "dev"
 
-	downloads  []Download
-	inProgress = 0
-	succeeded  = 0
-	failed     = 0
+	packDownlods    []Download
+	loaderDownlods  []Download
+	totalToDownload = 0
+	inProgress      = 0
+	succeeded       = 0
+	failed          = 0
 )
 
 var Options struct {
@@ -254,7 +256,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 		fatalf("Error fetching modpack: %v", err)
 	}
 
-	downloads = versionInfo.GetDownloads()
+	packDownlods = versionInfo.GetDownloads()
 
 	upgradeStr := ""
 
@@ -290,11 +292,11 @@ func HandleLaunch(file string, found int, versionFound int) {
 		}
 
 		sort.SliceStable(oldDownloads, getSortFunc(oldDownloads))
-		sort.SliceStable(downloads, getSortFunc(downloads))
+		sort.SliceStable(packDownlods, getSortFunc(packDownlods))
 
 		lastFound := -1
 
-		downloadsLen := len(downloads)
+		downloadsLen := len(packDownlods)
 
 		var changedFilesOld []Download
 		var changedFilesNew []Download
@@ -307,7 +309,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 		for _, oldDown := range oldDownloads {
 			for i := lastFound + 1; i < downloadsLen; i++ {
-				newDown := downloads[i]
+				newDown := packDownlods[i]
 				if oldDown.FullPath == newDown.FullPath {
 					lastFound = i
 					if oldDown.HashType != newDown.HashType || oldDown.Hash != newDown.Hash {
@@ -361,7 +363,7 @@ func HandleLaunch(file string, found int, versionFound int) {
 			}
 		}
 
-		downloads = append(changedFilesNew, newFiles...)
+		packDownlods = append(changedFilesNew, newFiles...)
 
 		printfln("Deleting removed files...")
 		for _, down := range oldDeletedFiles {
@@ -406,9 +408,9 @@ func HandleLaunch(file string, found int, versionFound int) {
 	modLoaderDls := ml.GetDownloads(installPath)
 
 	URL, _ := url.Parse("https://media.forgecdn.net/files/3557/251/Log4jPatcher-1.0.0.jar")
-	downloads = append(downloads, Download{"log4jfix/", *URL, "Log4jPatcher-1.0.0.jar", "sha1", "eb20584e179dc17b84b6b23fbda45485cd4ad7cc", filepath.Join("log4jfix/", "Log4jPatcher-1.0.0.jar")})
+	loaderDownlods = append(loaderDownlods, Download{"log4jfix/", *URL, "Log4jPatcher-1.0.0.jar", "sha1", "eb20584e179dc17b84b6b23fbda45485cd4ad7cc", filepath.Join("log4jfix/", "Log4jPatcher-1.0.0.jar")})
 
-	downloads = append(downloads, modLoaderDls...)
+	loaderDownlods = append(loaderDownlods, modLoaderDls...)
 
 	var java JavaProvider
 	if Options.Nojava {
@@ -417,10 +419,22 @@ func HandleLaunch(file string, found int, versionFound int) {
 		java = versionInfo.GetJavaProvider()
 	}
 
-	downloads = append(downloads, java.GetDownloads(installPath)...)
+	loaderDownlods = append(loaderDownlods, java.GetDownloads(installPath)...)
 
-	err = DoDownloads(Options.Threads, installPath, downloads...)
-	if err != nil {
+	totalToDownload = len(loaderDownlods) + len(packDownlods)
+
+	var wg sync.WaitGroup
+	errCh := make(chan error, 10)
+	wg.Add(1)
+	go DoDownloads(Options.Threads, installPath, &wg, errCh, loaderDownlods...)
+	wg.Add(1)
+	go DoDownloads(Options.Threads, installPath, &wg, errCh, packDownlods...)
+
+	go func() {
+		wg.Wait()
+		close(errCh)
+	}()
+	for err = range errCh {
 		fatal(err)
 	}
 
@@ -579,15 +593,16 @@ func APICall(url string, val interface{}) error {
 	return nil
 }
 
-func DoDownloads(workers int, dst string, downloads ...Download) error {
-	var wg sync.WaitGroup
-
+func DoDownloads(workers int, dst string, wg *sync.WaitGroup, ch chan error, downloads ...Download) {
+	defer wg.Done()
 	fi, err := os.Stat(dst)
 	if err != nil {
-		return err
+		ch <- err
+		return
 	}
 	if !fi.IsDir() {
-		return fmt.Errorf("destination is not a directory")
+		ch <- fmt.Errorf("destination is not a directory")
+		return
 	}
 
 	waitChan := make(chan struct{}, workers)
@@ -605,20 +620,18 @@ func DoDownloads(workers int, dst string, downloads ...Download) error {
 
 		waitChan <- struct{}{}
 		go func() {
-			s, dlErr := downloadFile(dl.URL.String(), tmpPath, dl.Name, checksum, &wg)
+			s, dlErr := downloadFile(dl.URL.String(), tmpPath, dl.Name, checksum, wg)
 			if dlErr != nil {
 				failed++
 				os.Remove(filepath.Join(tmpPath, dl.Name))
-				printfln("[%d/%d] %s", succeeded+failed, len(downloads), dlErr.Error())
+				printfln("[%d/%d] %s", succeeded+failed, totalToDownload, dlErr.Error())
 			} else {
 				succeeded++
-				printfln("[%d/%d] %s", succeeded+failed, len(downloads), s)
+				printfln("[%d/%d] %s", succeeded+failed, totalToDownload, s)
 			}
 			<-waitChan
 		}()
 	}
-	wg.Wait()
-	return nil
 }
 
 func downloadFile(url string, dest string, fileName string, checksum string, wg *sync.WaitGroup) (string, error) {
