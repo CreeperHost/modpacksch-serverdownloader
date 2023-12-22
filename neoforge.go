@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	hashVer "github.com/hashicorp/go-version"
 	"io"
 	"net/http"
 	"net/url"
@@ -13,9 +14,6 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
-	"sync"
-
-	hashVer "github.com/hashicorp/go-version"
 )
 
 func GetNeoForge(modloader Target, mc Minecraft) (error, ModLoader) {
@@ -120,13 +118,10 @@ func (f NeoForgeInstall) GetDownloads(installPath string) []Download {
 	var rawForgeJSON []byte
 	var rawForgeInstallJSON []byte
 	if !FileOnServer(forgeUrlJSON) {
-		var wg sync.WaitGroup
-		wg.Add(1)
-		_, err := downloadFile(forgeUrl, installPath, installerName, "", &wg)
+		_, err := downloadFile(forgeUrl, installPath, installerName, "", nil)
 		if err != nil {
 			fatalf("JSON not on server and unable to get forge jar:\n%s\n%s\n %v", forgeUrlJSON, forgeUrl, err)
 		}
-		wg.Wait()
 		bytes, err := UnzipFileToMemory(filepath.Join(installPath, installerName), "version.json")
 		if err == nil {
 			rawForgeJSON = bytes

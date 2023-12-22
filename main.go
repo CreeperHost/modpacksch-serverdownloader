@@ -591,7 +591,6 @@ func DoDownloads(workers int, dst string, downloads ...Download) error {
 	}
 
 	waitChan := make(chan struct{}, workers)
-	count := 0
 	for _, download := range downloads {
 		wg.Add(1)
 		dl := download
@@ -605,23 +604,27 @@ func DoDownloads(workers int, dst string, downloads ...Download) error {
 		}
 
 		waitChan <- struct{}{}
-		count++
-		go func(count int) {
+		go func() {
 			s, dlErr := downloadFile(dl.URL.String(), tmpPath, dl.Name, checksum, &wg)
 			if dlErr != nil {
-				println(dlErr)
+				failed++
+				os.Remove(filepath.Join(tmpPath, dl.Name))
+				printfln("[%d/%d] %s", succeeded+failed, len(downloads), dlErr.Error())
 			} else {
-				println(s)
+				succeeded++
+				printfln("[%d/%d] %s", succeeded+failed, len(downloads), s)
 			}
 			<-waitChan
-		}(count)
+		}()
 	}
 	wg.Wait()
 	return nil
 }
 
 func downloadFile(url string, dest string, fileName string, checksum string, wg *sync.WaitGroup) (string, error) {
-	defer wg.Done()
+	if wg != nil {
+		defer wg.Done()
+	}
 	destPath := filepath.Join(dest, fileName)
 
 	// Initialize the getter client
@@ -633,13 +636,10 @@ func downloadFile(url string, dest string, fileName string, checksum string, wg 
 
 	// Perform the download
 	if err := client.Get(); err != nil {
-		failed++
-		os.Remove(destPath)
-		logStr := fmt.Sprintf("[%d/%d] Error downloading %s: %v", succeeded+failed, len(downloads), url, err)
+		logStr := fmt.Sprintf("Error downloading %s: %v", url, err)
 		return "", errors.New(logStr)
 	} else {
-		succeeded++
-		logStr := fmt.Sprintf("[%d/%d] Downloaded %s from %s", succeeded+failed, len(downloads), fileName, url)
+		logStr := fmt.Sprintf("Downloaded %s from %s", fileName, url)
 		return logStr, nil
 	}
 }
