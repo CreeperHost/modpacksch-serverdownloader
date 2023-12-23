@@ -18,7 +18,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 var client = &http.Client{}
@@ -423,18 +422,43 @@ func HandleLaunch(file string, found int, versionFound int) {
 
 	totalToDownload = len(loaderDownlods) + len(packDownlods)
 
-	var wg sync.WaitGroup
-	errCh := make(chan error, 10)
-	wg.Add(1)
-	go DoDownloads(Options.Threads, installPath, &wg, errCh, loaderDownlods...)
-	wg.Add(1)
-	go DoDownloads(Options.Threads, installPath, &wg, errCh, packDownlods...)
+	var loaderWg sync.WaitGroup
+	loaderDlFin := false
+	loaderErrCh := make(chan error, 10)
+	loaderWg.Add(1)
+	go DoDownloads(Options.Threads, installPath, &loaderWg, loaderErrCh, loaderDownlods...) // mod loader downloads
+
+	var packWg sync.WaitGroup
+	packErrCh := make(chan error, 10)
+	packWg.Add(1)
+	go DoDownloads(Options.Threads, installPath, &packWg, packErrCh, packDownlods...) // pack content downloads
 
 	go func() {
-		wg.Wait()
-		close(errCh)
+		loaderWg.Wait()
+		close(loaderErrCh)
+		loaderDlFin = true
 	}()
-	for err = range errCh {
+	go func() {
+		packWg.Wait()
+		close(packErrCh)
+	}()
+	for err = range loaderErrCh {
+		fatal(err)
+	}
+	var mlInstallWg sync.WaitGroup
+	mlInstallWg.Add(1)
+	go func() {
+		for {
+			if loaderDlFin {
+				java.Install(installPath)
+				ml.Install(installPath, java)
+				mlInstallWg.Done()
+				break
+			}
+		}
+	}()
+	mlInstallWg.Wait()
+	for err = range packErrCh {
 		fatal(err)
 	}
 
@@ -450,12 +474,6 @@ func HandleLaunch(file string, found int, versionFound int) {
 			os.Exit(failed)
 		}
 	}
-
-	java.Install(installPath)
-
-	time.Sleep(time.Second * 2)
-
-	ml.Install(installPath, java)
 
 	versionInfo.WriteJson(installPath)
 
