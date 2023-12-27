@@ -97,7 +97,7 @@ func (f Fabric) GetDownloads(installPath string) []Download {
 		}
 		printf("Installer download URL %s", iURL.String())
 		downloads = append(downloads, Download{
-			Path:     installPath,
+			Path:     "",
 			URL:      *iURL,
 			Name:     iFileName,
 			FullPath: filepath.Join(installPath, iFileName),
