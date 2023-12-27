@@ -2,12 +2,12 @@ package main
 
 import (
 	"archive/tar"
-	"archive/zip"
 	"bufio"
 	"compress/gzip"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/klauspost/compress/zip"
 	"io"
 	"net/http"
 	"net/url"
@@ -131,7 +131,6 @@ func UnzipFileToMemory(archive string, filePath string) ([]byte, error) {
 	defer reader.Close()
 
 	var file *zip.File
-
 	for _, tempFile := range reader.File {
 		if tempFile.Name == filePath {
 			file = tempFile
