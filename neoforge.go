@@ -159,7 +159,9 @@ func (f NeoForgeInstall) GetDownloads(installPath string) []Download {
 		versionForge := VersionJsonFG3{}
 		err := json.Unmarshal(rawForgeInstallJSON, &versionForge)
 		if err == nil {
-			downloads = append(downloads, versionForge.GetDownloads()...)
+			unsanitisedDownloads := versionForge.GetDownloads()
+			sanitisedDownloads := removeDuplicates(unsanitisedDownloads)
+			downloads = append(downloads, sanitisedDownloads...)
 		}
 	}
 	vanillaVer, err := f.Version.Minecraft.GetVanillaVersion()
@@ -174,7 +176,17 @@ func (f NeoForgeInstall) GetDownloads(installPath string) []Download {
 	}
 	return downloads
 }
-
+func removeDuplicates(d []Download) []Download {
+	bucket := make(map[string]bool)
+	var result []Download
+	for _, dl := range d {
+		if _, ok := bucket[dl.FullPath]; !ok {
+			bucket[dl.FullPath] = true
+			result = append(result, dl)
+		}
+	}
+	return result
+}
 func (f NeoForgeInstall) Install(installPath string, java JavaProvider) bool {
 	printfln("Running NeoForge installer")
 	var packageName string

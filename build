@@ -86,6 +86,16 @@ go build -o $OUTPUT
 ((builds=builds+1))
 echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
 
+GOOS="windows"
+GOARCH="arm64"
+env GOOS=${GOOS} GOARCH=${GOARCH} > /dev/null 2>&1
+VER="${VERBASE}-${GOOS}-${GOARCH}"
+sed -i "s/{{BUILDNAME}}/${VER}/" main.go
+OUTPUT="out/${COMMIT: -5}/$GOARCH/$GOOS"
+go build -o $OUTPUT.exe
+((builds=builds+1))
+echo "Built ${VERBASE} for ${GOOS} on ${GOARCH}! - ${OUTPUT}"
+
 sed -i "s/${VER}/{{BUILDNAME}}/" main.go
 sed -i "s/${COMMIT}/{{COMMITHASH}}/" main.go
 end=`date +%s`
